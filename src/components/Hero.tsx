@@ -26,18 +26,7 @@ export default function Hero() {
       });
     }
 
-    // Garante que a keyframe CSS do marquee inicie corretamente pós-hidratação React
-    const ensureMarqueeAnimation = () => {
-      if (prefersReducedMotion) return;
-      const track = document.querySelector("[data-marquee-track]") as HTMLElement;
-      if (!track) return;
-      track.style.animation = "none";
-      void track.offsetWidth; // Trigger reflow
-      track.style.animation = "trust-marquee-x 32s linear infinite";
-    };
-    
-    setTimeout(ensureMarqueeAnimation, 50);
-    setTimeout(ensureMarqueeAnimation, 1200);
+
 
     // Video Proximity Logic
     const video = videoRef.current;
@@ -222,7 +211,7 @@ export default function Hero() {
             aria-label="Destaques da plataforma"
           >
             <div className="trust-marquee-track" data-marquee-track>
-              {[1, 2, 3, 4, 5, 6].map((i) => (
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((i) => (
                 <div
                   key={i}
                   className="trust-marquee-group text-sm font-semibold text-slate-600 whitespace-nowrap sm:text-[0.9375rem]"

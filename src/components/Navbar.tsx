@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -46,9 +47,9 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <button type="button" className="btn-login">
+          <Link href="/login" className="btn-login text-center inline-flex justify-center items-center no-underline">
             Login
-          </button>
+          </Link>
         </div>
       </div>
     </header>

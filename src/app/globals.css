@@ -122,13 +122,10 @@ body {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  min-width: 200%;
   width: max-content;
   align-items: center;
-  animation: trust-marquee-x 32s linear infinite !important;
-  animation-play-state: running !important;
+  animation: trust-marquee-x 30s linear infinite;
   will-change: transform;
-  transform: translate3d(0, 0, 0);
 }
 
 .trust-marquee-group {
