@@ -3,10 +3,24 @@
 import { useRef, useLayoutEffect, useState } from "react";
 import Link from "next/link";
 import gsap from "gsap";
-import { ArrowLeft, Mail, Lock, User, Phone, FileText, CheckCircle } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, Phone, FileText, CheckCircle, AlertCircle } from "lucide-react";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function RegisterPage() {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  
+  const [formData, setFormData] = useState({
+    nome: "",
+    telefone: "",
+    cpf: "",
+    email: "",
+    senha: "",
+    confirmarSenha: ""
+  });
+
   const containerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
@@ -30,20 +44,61 @@ export default function RegisterPage() {
     return () => ctx.revert();
   }, []);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formRef.current) {
-      gsap.to(formRef.current, {
-        opacity: 0,
-        x: -20,
-        duration: 0.3,
-        ease: "power2.in",
-        onComplete: () => {
-          setIsSuccess(true);
-        }
+    if (!formData.nome || !formData.email || !formData.senha || !formData.confirmarSenha) {
+      setError("Preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (formData.senha !== formData.confirmarSenha) {
+      setError("Senhas não são semelhantes!");
+      return;
+    }
+    
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
       });
-    } else {
-      setIsSuccess(true);
+      
+      const data = await res.json();
+
+      // Based on the provided backend logic, it returns HTTP 200 with { message: '...' } inside
+      // So we need to check the message string, or simply check if res.ok
+      if (!res.ok || (data.message && data.message !== 'Usuário registrado com sucesso!')) {
+        setError(data.message || data.error || "Erro ao realizar o cadastro.");
+        setLoading(false);
+        return;
+      }
+
+      // Success transition
+      if (formRef.current) {
+        gsap.to(formRef.current, {
+          opacity: 0,
+          x: -20,
+          duration: 0.3,
+          ease: "power2.in",
+          onComplete: () => {
+            setIsSuccess(true);
+            setLoading(false);
+          }
+        });
+      } else {
+        setIsSuccess(true);
+        setLoading(false);
+      }
+    } catch (err) {
+      setError("Erro de conexão com o servidor. Tente novamente mais tarde.");
+      setLoading(false);
     }
   };
 
@@ -105,11 +160,26 @@ export default function RegisterPage() {
             </div>
 
             <form className="flex flex-col gap-4" onSubmit={handleRegister}>
+              
+              {error && (
+                <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl border border-red-100 text-sm font-medium animate-in fade-in zoom-in duration-300">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <p>{error}</p>
+                </div>
+              )}
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Nome completo</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="text" placeholder="Seu nome" className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
+                  <input 
+                    type="text" 
+                    name="nome"
+                    value={formData.nome}
+                    onChange={handleChange}
+                    placeholder="Seu nome" 
+                    className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" 
+                  />
                 </div>
               </div>
               
@@ -117,7 +187,14 @@ export default function RegisterPage() {
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Telefone</label>
                 <div className="relative">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="tel" placeholder="(00) 00000-0000" className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
+                  <input 
+                    type="tel" 
+                    name="telefone"
+                    value={formData.telefone}
+                    onChange={handleChange}
+                    placeholder="(00) 00000-0000" 
+                    className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" 
+                  />
                 </div>
               </div>
 
@@ -125,7 +202,14 @@ export default function RegisterPage() {
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">CNPJ / CPF</label>
                 <div className="relative">
                   <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="text" placeholder="00.000.000/0000-00" className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
+                  <input 
+                    type="text" 
+                    name="cpf"
+                    value={formData.cpf}
+                    onChange={handleChange}
+                    placeholder="00.000.000/0000-00" 
+                    className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" 
+                  />
                 </div>
               </div>
 
@@ -133,7 +217,14 @@ export default function RegisterPage() {
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Email</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="email" placeholder="name@company.com" className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
+                  <input 
+                    type="email" 
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="name@company.com" 
+                    className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" 
+                  />
                 </div>
               </div>
 
@@ -141,7 +232,14 @@ export default function RegisterPage() {
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Senha</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="password" placeholder="••••••••" className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
+                  <input 
+                    type="password" 
+                    name="senha"
+                    value={formData.senha}
+                    onChange={handleChange}
+                    placeholder="••••••••" 
+                    className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" 
+                  />
                 </div>
               </div>
 
@@ -149,12 +247,19 @@ export default function RegisterPage() {
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Repetir Senha</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="password" placeholder="••••••••" className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
+                  <input 
+                    type="password" 
+                    name="confirmarSenha"
+                    value={formData.confirmarSenha}
+                    onChange={handleChange}
+                    placeholder="••••••••" 
+                    className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" 
+                  />
                 </div>
               </div>
 
-              <button type="submit" className="mt-4 w-full relative group overflow-hidden bg-slate-900 border border-slate-800 text-white font-bold py-4 rounded-xl transition-all duration-300 hover:scale-[0.98] hover:shadow-[0_18px_48px_rgba(11,87,208,0.22)]">
-                <span className="relative z-10">Finalizar Cadastro</span>
+              <button disabled={loading} type="submit" className="mt-4 w-full relative group overflow-hidden bg-slate-900 border border-slate-800 text-white font-bold py-4 rounded-xl transition-all duration-300 hover:scale-[0.98] hover:shadow-[0_18px_48px_rgba(11,87,208,0.22)] disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                <span className="relative z-10">{loading ? "Processando..." : "Finalizar Cadastro"}</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
               </button>
             </form>
