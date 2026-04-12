@@ -5,7 +5,7 @@ import Link from "next/link";
 import gsap from "gsap";
 import { ArrowLeft, Mail, Lock, User, Phone, FileText, CheckCircle, AlertCircle } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 export default function RegisterPage() {
   const [isSuccess, setIsSuccess] = useState(false);

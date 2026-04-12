@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { ArrowLeft, Mail, Lock, AlertCircle } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +41,7 @@ export default function LoginPage() {
       setError("Preencha todos os campos obrigatórios.");
       return;
     }
-    
+
     setError("");
     setLoading(true);
 
@@ -83,7 +83,7 @@ export default function LoginPage() {
         <div className="absolute w-[min(500px,85vw)] h-[min(500px,85vw)] bg-teal-500 rounded-full blur-[80px] opacity-20 -bottom-[150px] -right-[150px] animate-[blob-move_20s_infinite_alternate_reverse]" />
       </div>
 
-      <div 
+      <div
         ref={containerRef}
         className="relative z-10 w-full max-w-[440px] bg-white/60 backdrop-blur-2xl border border-white/50 shadow-[0_8px_32px_rgba(31,38,135,0.05)] rounded-[32px] p-8 sm:p-10 transition-all duration-500 hover:shadow-[0_20px_40px_rgba(20,184,166,0.15)] hover:border-teal-400/40"
       >
@@ -104,7 +104,7 @@ export default function LoginPage() {
           </div>
 
           <form className="flex flex-col gap-4" onSubmit={handleLogin}>
-            
+
             {error && (
               <div className="flex items-center gap-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl border border-red-100 text-sm font-medium animate-in fade-in zoom-in duration-300">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -116,12 +116,12 @@ export default function LoginPage() {
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Email</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com" 
-                  className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" 
+                  placeholder="name@company.com"
+                  className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400"
                 />
               </div>
             </div>
@@ -130,12 +130,12 @@ export default function LoginPage() {
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Senha</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  placeholder="••••••••" 
-                  className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" 
+                  placeholder="••••••••"
+                  className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400"
                 />
               </div>
             </div>
@@ -154,8 +154,8 @@ export default function LoginPage() {
         <div className="mt-8 pt-6 border-t border-slate-200/50 text-center relative z-20">
           <p className="text-slate-500 text-sm font-medium">
             Não possui uma conta?
-            <Link 
-              href="/auth/register" 
+            <Link
+              href="/auth/register"
               className="ml-2 font-bold text-blue-600 hover:text-blue-700 transition-colors cursor-pointer outline-none"
             >
               Criar conta agora
