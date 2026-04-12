@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useRef, useLayoutEffect } from "react";
+import { useRef, useLayoutEffect } from "react";
 import Link from "next/link";
 import gsap from "gsap";
-import { ArrowLeft, Mail, Lock, User, Phone, FileText } from "lucide-react";
+import { ArrowLeft, Mail, Lock } from "lucide-react";
 
 export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -18,30 +17,14 @@ export default function LoginPage() {
         { opacity: 0, y: 40, scale: 0.95 },
         { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "power3.out" }
       );
+      gsap.fromTo(
+        formRef.current,
+        { opacity: 0, x: 20 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out", delay: 0.3 }
+      );
     });
     return () => ctx.revert();
   }, []);
-
-  const toggleMode = () => {
-    // Elegant crossfade / slide whenever toggling between Login and Register
-    gsap.to(formRef.current, {
-      opacity: 0,
-      x: isLogin ? -20 : 20,
-      duration: 0.25,
-      ease: "power2.in",
-      onComplete: () => {
-        setIsLogin(!isLogin);
-        // Delay to allow React hydration of new elements before animating them in
-        requestAnimationFrame(() => {
-          gsap.fromTo(
-            formRef.current,
-            { opacity: 0, x: isLogin ? 20 : -20 },
-            { opacity: 1, x: 0, duration: 0.4, ease: "power2.out", delay: 0.05 }
-          );
-        });
-      }
-    });
-  };
 
   return (
     <div className="relative min-h-[100svh] w-full flex items-center justify-center overflow-hidden px-4 py-20 bg-gradient-to-br from-[#ffffff] via-[#f0f9ff] to-[#f0fdf4]">
@@ -64,42 +47,14 @@ export default function LoginPage() {
         <div ref={formRef} className="w-full">
           <div className="mb-8">
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2 bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">
-              {isLogin ? "Bem-vindo de volta" : "Criar nova conta"}
+              Bem-vindo de volta
             </h1>
             <p className="text-slate-500 text-sm font-medium">
-              {isLogin ? "Acesse seu painel Facility Envios." : "Junte-se à operação inteligente para pontos de coleta."}
+              Acesse seu painel Facility Envios.
             </p>
           </div>
 
           <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
-            {!isLogin && (
-              <>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Nome completo</label>
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input type="text" placeholder="Seu nome" className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
-                  </div>
-                </div>
-                
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Telefone</label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input type="tel" placeholder="(00) 00000-0000" className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">CNPJ / CPF</label>
-                  <div className="relative">
-                    <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                    <input type="text" placeholder="00.000.000/0000-00" className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
-                  </div>
-                </div>
-              </>
-            )}
-
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Email</label>
               <div className="relative">
@@ -116,24 +71,12 @@ export default function LoginPage() {
               </div>
             </div>
 
-             {!isLogin && (
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Repetir Senha</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="password" placeholder="••••••••" className="w-full pl-11 pr-4 py-3 bg-white/80 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-slate-700 placeholder:text-slate-400" />
-                </div>
-              </div>
-            )}
-
-            {isLogin && (
-              <div className="flex justify-end mt-[-4px]">
-                <a href="#" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">Esqueceu a senha?</a>
-              </div>
-            )}
+            <div className="flex justify-end mt-[-4px]">
+              <a href="#" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">Esqueceu a senha?</a>
+            </div>
 
             <button type="submit" className="mt-4 w-full relative group overflow-hidden bg-slate-900 border border-slate-800 text-white font-bold py-4 rounded-xl transition-all duration-300 hover:scale-[0.98] hover:shadow-[0_18px_48px_rgba(11,87,208,0.22)]">
-              <span className="relative z-10">{isLogin ? "Entrar na plataforma" : "Finalizar Cadastro"}</span>
+              <span className="relative z-10">Entrar na plataforma</span>
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-teal-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
             </button>
           </form>
@@ -141,17 +84,15 @@ export default function LoginPage() {
 
         <div className="mt-8 pt-6 border-t border-slate-200/50 text-center relative z-20">
           <p className="text-slate-500 text-sm font-medium">
-            {isLogin ? "Não possui uma conta?" : "Já possui uma conta?"}
-            <button 
-              type="button"
-              onClick={toggleMode} 
+            Não possui uma conta?
+            <Link 
+              href="/auth/register" 
               className="ml-2 font-bold text-blue-600 hover:text-blue-700 transition-colors cursor-pointer outline-none"
             >
-              {isLogin ? "Criar conta agora" : "Fazer login"}
-            </button>
+              Criar conta agora
+            </Link>
           </p>
         </div>
-
       </div>
     </div>
   );
