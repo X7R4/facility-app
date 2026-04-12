@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <title>Design System - Facility Front</title>
+    
+    <!-- Scripts & Fonts -->
+    <script src="https://unpkg.com/lucide@0.260.0/dist/lucide.min.js"></script>
+    <script src="../Templates/axiolance.webflow.io/assets/webfont_3a3adf980c7d.js"></script>
+    <script>
+        WebFont.load({ google: { families: ["Plus Jakarta Sans:300,400,500,600,700,800", "Inter Tight:200,300,400,500,600,700,800"] } });
+    </script>
+    
+    <!-- External CSS -->
+    <link href="../Templates/glass-green-effect/assets/resource_3fa48481346f.js" rel="preload" as="script"/>
+    <link href="../Templates/nexagent.webflow.io/assets/nexagent_3d0c4378b4b7.css" rel="stylesheet" type="text/css"/>
+    <link href="../Templates/axiolance.webflow.io/assets/axiolance_aa49763a645f.css" rel="stylesheet" type="text/css"/>
+
+    <style>
+        html { scroll-behavior: smooth; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 50%, #ccfbf1 100%);
+            color: #0f172a;
+            overflow-x: hidden;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Glass Green Effects Adapted for Light Theme */
+        .glow-teal { box-shadow: 0 0 20px rgba(20, 184, 166, 0.4), 0 0 40px rgba(20, 184, 166, 0.2); }
+        .glow-teal-intense {
+            box-shadow: 0 0 30px rgba(20, 184, 166, 0.5), 0 0 60px rgba(20, 184, 166, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glow-teal-intense:hover {
+            box-shadow: 0 0 40px rgba(20, 184, 166, 0.7), 0 0 80px rgba(20, 184, 166, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transform: translateY(-2px) scale(1.05);
+        }
+        
+        .glow-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.5);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            border-radius: 24px;
+        }
+        .glow-card:hover {
+            transform: translateY(-8px) rotateX(2deg) rotateY(-2deg);
+            box-shadow: 0 25px 80px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 60px rgba(20, 184, 166, 0.3);
+        }
+        
+        .glow-border {
+            position: relative;
+            border: 1px solid rgba(20, 184, 166, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .glow-border:hover {
+            border-color: rgba(20, 184, 166, 0.8);
+            box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .hover-lift { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hover-lift:hover { transform: translateY(-4px) scale(1.02); }
+        
+        .hover-glow { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: inherit; text-decoration: none; }
+        .hover-glow:hover {
+            text-shadow: 0 0 25px rgba(20, 184, 166, 0.8), 0 0 50px rgba(20, 184, 166, 0.4);
+            color: #0d9488;
+        }
+
+        .hover-float { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .hover-float:hover {
+            transform: translateY(-6px);
+            filter: drop-shadow(0 10px 30px rgba(20, 184, 166, 0.3));
+        }
+
+        .tag-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+        .tag-hover:hover {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(6, 182, 212, 0.2));
+            border-color: rgba(20, 184, 166, 0.8);
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(20, 184, 166, 0.3);
+        }
+
+        .card-image-hover { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden; border-radius: 16px; }
+        .card-image-hover img { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); width: 100%; height: 100%; object-fit: cover;}
+        .card-image-hover:hover img {
+            transform: scale(1.1) rotate(1deg);
+            filter: brightness(1.05) contrast(1.05);
+        }
+
+        .button-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+        }
+        .button-hover::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        .button-hover:hover::before { left: 100%; }
+        .button-hover:hover { transform: translateY(-2px) scale(1.05); }
+
+        .interactive-text {
+            background: linear-gradient(135deg, #0d9488, #0284c7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+        }
+        .interactive-text:hover {
+            background: linear-gradient(135deg, #14b8a6, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transform: scale(1.02);
+            transition: all 0.3s ease;
+        }
+
+        /* Animations */
+        .animate-glow { animation: glow 2s ease-in-out infinite alternate; }
+        @keyframes glow {
+            from { box-shadow: 0 0 20px rgba(20, 184, 166, 0.3), 0 0 40px rgba(20, 184, 166, 0.1); }
+            to { box-shadow: 0 0 30px rgba(20, 184, 166, 0.6), 0 0 60px rgba(20, 184, 166, 0.3); }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .animate-fade-in { animation: fadeIn 1s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; }
+        .animate-slide-up { animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; }
+        .animate-scale-in { animation: scaleIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+
+        /* Ambient light for light theme */
+        .ambient-light {
+            position: fixed; top: 10%; left: 5%; width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(20, 184, 166, 0.15) 0%, transparent 70%);
+            border-radius: 50%; filter: blur(60px);
+            animation: ambientMove 10s ease-in-out infinite alternate;
+            pointer-events: none; z-index: -1;
+        }
+        .ambient-light-2 {
+            position: fixed; bottom: 10%; right: 5%; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
+            border-radius: 50%; filter: blur(80px);
+            animation: ambientMove2 12s ease-in-out infinite alternate;
+            pointer-events: none; z-index: -1;
+        }
+        @keyframes ambientMove { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(150px, -50px) scale(1.2); } }
+        @keyframes ambientMove2 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-100px, 100px) scale(0.9); } }
+
+        /* Navigation */
+        .ds-nav {
+            position: sticky; top: 0; z-index: 1000;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.05);
+            padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .nav-links { display: flex; gap: 1.5rem; }
+        .nav-links a { color: #334155; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .section-container { max-width: 1400px; margin: 0 auto; padding: 6rem 2rem; }
+        .section-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 3rem; color: #0f172a; position: relative; display: inline-block;}
+        .section-title::after { content: ''; position: absolute; left: 0; bottom: -10px; width: 60px; height: 4px; background: linear-gradient(90deg, #0d9488, #0ea5e9); border-radius: 2px; }
+
+        /* Helpers */
+        .flex { display: flex; }
+        .flex-col { display: flex; flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .gap-4 { gap: 1rem; }
+        .gap-6 { gap: 1.5rem; }
+        .gap-8 { gap: 2rem; }
+        .grid { display: grid; }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+        .text-sm { font-size: 0.875rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.25rem; }
+        .font-bold { font-weight: 700; }
+        .text-slate-500 { color: #64748b; }
+        
+        /* Modals and tooltips */
+        .tooltip-demo { position: relative; display: inline-block; cursor: help; }
+        .tooltip-demo .tooltip-text {
+            visibility: hidden; width: 120px; background-color: #0f172a; color: #fff; text-align: center;
+            border-radius: 8px; padding: 8px; position: absolute; z-index: 1; bottom: 125%; left: 50%;
+            margin-left: -60px; opacity: 0; transition: opacity 0.3s; font-size: 12px; font-weight: 500;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .tooltip-demo .tooltip-text::after {
+            content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px;
+            border-width: 5px; border-style: solid; border-color: #0f172a transparent transparent transparent;
+        }
+        .tooltip-demo:hover .tooltip-text { visibility: visible; opacity: 1; transform: translateY(-5px); }
+
+        @media (max-width: 992px) {
+            .grid-cols-3, .grid-cols-4, .grid-cols-2 { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-light"></div>
+    <div class="ambient-light-2"></div>
+
+    <nav class="ds-nav">
+        <div class="flex items-center gap-4">
+            <div class="rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 p-1.5 glow-teal animate-glow hover-lift" style="border-radius: 12px; padding: 4px;">
+                <div style="background: white; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="layers" style="color: #0d9488;"></i>
+                </div>
+            </div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">Facility<span class="interactive-text">DS</span></div>
+        </div>
+        <div class="nav-links">
+            <a href="#hero" class="hover-glow">Hero</a>
+            <a href="#typography" class="hover-glow">Tipografia</a>
+            <a href="#cores" class="hover-glow">Cores</a>
+            <a href="#components" class="hover-glow">Componentes</a>
+            <a href="#icones" class="hover-glow">Ícones</a>
+            <a href="#animacoes" class="hover-glow">Motion</a>
+        </div>
+        <button class="button-hover glow-teal-intense hover-float" style="padding: 10px 24px; background: #0d9488; color: white; border-radius: 99px; font-weight: 600;">Download UI</button>
+    </nav>
+
+    <!-- 1. Hero Demonstration -->
+    <section id="hero" class="section-container" style="min-height: 90vh; display: flex; align-items: center; position: relative;">
+        <!-- Background Lottie animation container -->
+        <div style="position: absolute; right: 0; top: 10%; width: 50%; opacity: 0.6; pointer-events: none;" class="animate-float">
+            <div data-animation-type="lottie" data-autoplay="1" data-loop="1" data-src="https://cdn.prod.website-files.com/69059456676850507afd94d2/6923df90546801955958001a_earth%20lottie%20fixed.json">
+                 <svg height="541" viewBox="0 0 545 541" width="545" xmlns="http://www.w3.org/2000/svg">
+                     <circle cx="272" cy="270" r="200" fill="none" stroke="#0d9488" stroke-width="2" stroke-dasharray="10 10"/>
+                     <circle cx="272" cy="270" r="150" fill="none" stroke="#0ea5e9" stroke-width="1" opacity="0.5"/>
+                     <circle cx="272" cy="270" r="250" fill="none" stroke="#0ea5e9" stroke-width="1" opacity="0.3"/>
+                 </svg>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 items-center" style="width: 100%; position: z-index: 10;">
+            <div class="flex-col gap-6 animate-slide-up">
+                <div class="banner-badge-wrapper glow-border animate-fade-in" style="display: inline-flex; align-items: center; padding: 6px 16px; border-radius: 99px; background: rgba(255,255,255,0.7); width: fit-content; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <i data-lucide="sparkles" style="color: #0ea5e9; width: 16px;"></i>
+                    <span class="text-sm font-bold" style="color: #334155;">Design System 2.0</span>
+                </div>
+                <h1 style="font-size: 4.5rem; font-weight: 800; line-height: 1.1; margin: 0; letter-spacing: -0.02em;">
+                    Crie experiências <br/>
+                    <span class="interactive-text">Inesquecíveis</span>
+                </h1>
+                <p style="font-size: 1.25rem; color: #475569; line-height: 1.6; max-width: 90%;">
+                    Um ecossistema vivo de componentes, padrões e animações desenhado para encantar usuários com vidro, brilhos e movimentos suaves.
+                </p>
+                <div class="flex gap-4 animate-slide-up delay-200 mt-4">
+                    <button class="button-hover glow-teal-intense hover-float" style="padding: 16px 32px; background: linear-gradient(135deg, #0d9488, #0284c7); color: white; border-radius: 99px; font-weight: 700; font-size: 1.1rem; border: none; box-shadow: 0 10px 25px rgba(13, 148, 136, 0.4);">
+                        Explorar Componentes
+                    </button>
+                    <button class="button-hover glow-border hover-lift" style="padding: 16px 32px; background: white; color: #0f172a; border-radius: 99px; font-weight: 700; font-size: 1.1rem;">
+                        Ver Documentação
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-6 mt-4 animate-fade-in delay-400">
+                    <div class="flex -space-x-4">
+                        <img src="https://i.pravatar.cc/100?img=1" style="width: 40px; height: 40px; border-radius: 50%; border: 3px solid white; z-index: 3;" />
+                        <img src="https://i.pravatar.cc/100?img=2" style="width: 40px; height: 40px; border-radius: 50%; border: 3px solid white; z-index: 2;" />
+                        <img src="https://i.pravatar.cc/100?img=3" style="width: 40px; height: 40px; border-radius: 50%; border: 3px solid white; z-index: 1;" />
+                    </div>
+                    <div class="text-sm font-bold" style="color: #64748b;">+12.000 profissionais utilizando</div>
+                </div>
+            </div>
+            
+            <div class="animate-scale-in delay-300 relative">
+                <div class="glow-card" style="padding: 2rem; position: relative; z-index: 2;">
+                    <div class="card-image-hover" style="height: 350px; width: 100%; border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.1);">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop" alt="Dashboard Preview" />
+                    </div>
+                    
+                    <!-- Floating Elements -->
+                    <div class="hover-float glow-card" style="position: absolute; bottom: -30px; left: -30px; padding: 1.5rem; background: white; border-radius: 20px; display: flex; align-items: center; gap: 15px;">
+                        <div style="background: #e0f2fe; padding: 12px; border-radius: 12px;"><i data-lucide="activity" style="color: #0284c7;"></i></div>
+                        <div>
+                            <div style="font-weight: 800; font-size: 1.5rem; color: #0f172a;">89%</div>
+                            <div class="text-sm" style="color: #64748b; font-weight: 600;">Performance Score</div>
+                        </div>
+                    </div>
+                    
+                    <div class="hover-float glow-card delay-200" style="position: absolute; top: 40px; right: -40px; padding: 1.5rem; background: white; border-radius: 20px;">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite;"></span>
+                            <span class="font-bold text-sm">System Online</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #64748b;">All services operational</div>
+                    </div>
+                </div>
+                
+                <!-- Background decorative shapes -->
+                <div style="position: absolute; top: -5%; left: 5%; width: 100%; height: 100%; background: linear-gradient(135deg, #0d9488, #0ea5e9); border-radius: 30px; opacity: 0.2; transform: rotate(-5deg); z-index: 1;" class="animate-float"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. Typography -->
+    <section id="typography" class="section-container">
+        <h2 class="section-title animate-slide-up">Tipografia</h2>
+        <div class="glow-card animate-scale-in" style="padding: 3rem; background: rgba(255,255,255,0.8);">
+            <div class="grid grid-cols-3 gap-8 mb-8" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 2rem;">
+                <div>
+                    <h3 style="font-size: 1rem; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem;">Primary Font</h3>
+                    <div style="font-size: 2rem; font-weight: 800;">Plus Jakarta Sans</div>
+                    <p class="text-sm mt-2 color-slate-500">Headings, CTAs, Hero elements</p>
+                </div>
+                <div>
+                    <h3 style="font-size: 1rem; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem;">Secondary Font</h3>
+                    <div style="font-size: 2rem; font-weight: 500; font-family: 'Inter Tight', sans-serif;">Inter Tight</div>
+                    <p class="text-sm mt-2 color-slate-500">Body text, paragraphs, labels</p>
+                </div>
+                <div>
+                    <h3 style="font-size: 1rem; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem;">Loading Strategy</h3>
+                    <div style="font-size: 1.2rem; font-weight: 600;">Google Fonts CDN</div>
+                    <p class="text-sm mt-2 color-slate-500">Weights: 300, 400, 500, 600, 700, 800</p>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+                <div class="flex items-center justify-between" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem;">
+                    <div style="width: 20%; color: #64748b; font-weight: 600; text-transform: uppercase;">Heading 1</div>
+                    <div style="width: 60%;"><h1 style="font-size: 4rem; font-weight: 800; margin: 0; letter-spacing: -0.02em;">O Rápido Raposo</h1></div>
+                    <div style="width: 20%; text-align: right; font-family: monospace; color: #94a3b8;">64px / 1.1 / 800</div>
+                </div>
+                <div class="flex items-center justify-between" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem;">
+                    <div style="width: 20%; color: #64748b; font-weight: 600; text-transform: uppercase;">Heading 2</div>
+                    <div style="width: 60%;"><h2 style="font-size: 3rem; font-weight: 700; margin: 0; letter-spacing: -0.01em;">Pula Sobre o Cão</h2></div>
+                    <div style="width: 20%; text-align: right; font-family: monospace; color: #94a3b8;">48px / 1.2 / 700</div>
+                </div>
+                <div class="flex items-center justify-between" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem;">
+                    <div style="width: 20%; color: #64748b; font-weight: 600; text-transform: uppercase;">Heading 3</div>
+                    <div style="width: 60%;"><h3 style="font-size: 2rem; font-weight: 600; margin: 0;">Design Dinâmico</h3></div>
+                    <div style="width: 20%; text-align: right; font-family: monospace; color: #94a3b8;">32px / 1.3 / 600</div>
+                </div>
+                <div class="flex items-center justify-between" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem;">
+                    <div style="width: 20%; color: #64748b; font-weight: 600; text-transform: uppercase;">Body Large</div>
+                    <div style="width: 60%;"><p style="font-size: 1.25rem; line-height: 1.6; margin: 0; font-family: 'Inter Tight';">Criação de soluções consistentes e escaláveis baseadas em tokens visuais.</p></div>
+                    <div style="width: 20%; text-align: right; font-family: monospace; color: #94a3b8;">20px / 1.6 / 400</div>
+                </div>
+                <div class="flex items-center justify-between" style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 1rem;">
+                    <div style="width: 20%; color: #64748b; font-weight: 600; text-transform: uppercase;">Body Regular</div>
+                    <div style="width: 60%;"><p style="font-size: 1rem; line-height: 1.5; margin: 0; font-family: 'Inter Tight';">O componente padrão usado em quase todos os layouts. Foco máximo em legibilidade.</p></div>
+                    <div style="width: 20%; text-align: right; font-family: monospace; color: #94a3b8;">16px / 1.5 / 400</div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div style="width: 20%; color: #64748b; font-weight: 600; text-transform: uppercase;">Caption / Label</div>
+                    <div style="width: 60%;"><span style="font-size: 0.875rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Etiqueta Pequena</span></div>
+                    <div style="width: 20%; text-align: right; font-family: monospace; color: #94a3b8;">14px / 1.4 / 600</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. Cores -->
+    <section id="cores" class="section-container">
+        <h2 class="section-title animate-slide-up">Sistema de Cores</h2>
+        
+        <div class="grid grid-cols-4 gap-6 animate-scale-in">
+            <!-- Cor 1 -->
+            <div class="glow-card hover-lift" style="overflow: hidden; padding: 0;">
+                <div style="height: 120px; background: #0f172a; width: 100%;"></div>
+                <div style="padding: 1.5rem;">
+                    <div style="font-weight: 800; font-size: 1.2rem; margin-bottom: 5px;">Primary Text</div>
+                    <div class="text-sm font-bold color-slate-500">Slate 900</div>
+                    <div class="text-xs" style="font-family: monospace; color: #94a3b8; margin-top: 10px;">HEX: #0F172A<br/>RGB: 15, 23, 42</div>
+                </div>
+            </div>
+            <!-- Cor 2 -->
+            <div class="glow-card hover-lift" style="overflow: hidden; padding: 0;">
+                <div style="height: 120px; background: #0d9488; width: 100%;"></div>
+                <div style="padding: 1.5rem;">
+                    <div style="font-weight: 800; font-size: 1.2rem; margin-bottom: 5px;">Teal Accent</div>
+                    <div class="text-sm font-bold color-slate-500">Teal 600</div>
+                    <div class="text-xs" style="font-family: monospace; color: #94a3b8; margin-top: 10px;">HEX: #0D9488<br/>RGB: 13, 148, 136</div>
+                </div>
+            </div>
+            <!-- Cor 3 -->
+            <div class="glow-card hover-lift" style="overflow: hidden; padding: 0;">
+                <div style="height: 120px; background: #0284c7; width: 100%;"></div>
+                <div style="padding: 1.5rem;">
+                    <div style="font-weight: 800; font-size: 1.2rem; margin-bottom: 5px;">Blue Accent</div>
+                    <div class="text-sm font-bold color-slate-500">Sky 600</div>
+                    <div class="text-xs" style="font-family: monospace; color: #94a3b8; margin-top: 10px;">HEX: #0284C7<br/>RGB: 2, 132, 199</div>
+                </div>
+            </div>
+            <!-- Cor 4 (Gradients) -->
+            <div class="glow-card hover-lift" style="overflow: hidden; padding: 0;">
+                <div style="height: 120px; background: linear-gradient(135deg, #0d9488, #0ea5e9); width: 100%;"></div>
+                <div style="padding: 1.5rem;">
+                    <div style="font-weight: 800; font-size: 1.2rem; margin-bottom: 5px;">Brand Gradient</div>
+                    <div class="text-sm font-bold color-slate-500">Teal to Sky</div>
+                    <div class="text-xs" style="font-family: monospace; color: #94a3b8; margin-top: 10px;">Usage: Buttons, Highlights, Borders</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glow-card animate-slide-up mt-8" style="padding: 2rem; background: white;">
+            <h3 style="font-weight: 800; margin-bottom: 1rem;">Superfícies de Fundo & Opacidade</h3>
+            <div class="grid grid-cols-3 gap-6">
+                <div class="glow-border" style="padding: 2rem; border-radius: 16px; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px);">
+                    <div class="font-bold">Glassmorphism Ligth</div>
+                    <p class="text-sm color-slate-500">rgba(255,255,255,0.7) + blur(20px)</p>
+                </div>
+                <div style="padding: 2rem; border-radius: 16px; background: linear-gradient(135deg, rgba(13, 148, 136, 0.1), rgba(14, 165, 233, 0.1)); border: 1px solid rgba(13,148,136,0.2);">
+                    <div class="font-bold" style="color: #0d9488;">Gradient Surface</div>
+                    <p class="text-sm color-slate-500">Usado em cards secundários</p>
+                </div>
+                <div style="padding: 2rem; border-radius: 16px; background: #f8fafc; border: 1px solid #e2e8f0;">
+                    <div class="font-bold">Neutral Surface</div>
+                    <p class="text-sm color-slate-500">Fundos internos sólidos</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Componentes UI -->
+    <section id="components" class="section-container">
+        <h2 class="section-title animate-slide-up">UI Components</h2>
+        
+        <div class="grid grid-cols-2 gap-8">
+            <!-- Botões -->
+            <div class="glow-card p-6 animate-scale-in" style="padding: 2rem; background: white;">
+                <h3 style="font-weight: 800; margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">Buttons & CTAs</h3>
+                <div class="flex-col gap-6">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-bold color-slate-500 w-1/3">Primary Glow</span>
+                        <button class="button-hover glow-teal-intense hover-float" style="padding: 14px 28px; background: linear-gradient(135deg, #0d9488, #0284c7); color: white; border-radius: 99px; font-weight: 700; border: none; flex-grow: 1;">Ação Principal</button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-bold color-slate-500 w-1/3">Secondary Outline</span>
+                        <button class="button-hover glow-border hover-lift" style="padding: 14px 28px; background: white; color: #0d9488; border-radius: 99px; font-weight: 700; flex-grow: 1;">Ação Secundária</button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-bold color-slate-500 w-1/3">Tertiary Ghost</span>
+                        <button class="hover-glow interactive-text" style="padding: 14px 28px; background: transparent; border: none; font-weight: 800; cursor: pointer; flex-grow: 1; text-align: center;">Ler Mais <i data-lucide="arrow-right" style="width: 16px; display: inline-block; vertical-align: middle;"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inputs & Modals -->
+            <div class="glow-card p-6 animate-scale-in delay-100" style="padding: 2rem; background: white;">
+                <h3 style="font-weight: 800; margin-bottom: 2rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">Inputs & Badges</h3>
+                <div class="flex-col gap-4">
+                    <div style="position: relative;">
+                        <input type="email" placeholder="Seu email corporativo" style="width: 100%; padding: 16px 20px; border-radius: 12px; border: 1px solid #cbd5e1; background: #f8fafc; font-family: inherit; font-size: 1rem; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='#0d9488'; this.style.boxShadow='0 0 0 3px rgba(13,148,136,0.2)';" onblur="this.style.borderColor='#cbd5e1'; this.style.boxShadow='none';">
+                        <button class="button-hover" style="position: absolute; right: 6px; top: 6px; bottom: 6px; background: #0f172a; color: white; border-radius: 8px; border: none; padding: 0 20px; font-weight: 600;">Assinar</button>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-4 mt-4">
+                        <span class="tag-hover" style="padding: 6px 16px; border-radius: 99px; background: rgba(13,148,136,0.1); color: #0d9488; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(13,148,136,0.3);">
+                            <i data-lucide="check-circle" style="width: 14px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i> Status Ativo
+                        </span>
+                        <span class="tag-hover" style="padding: 6px 16px; border-radius: 99px; background: rgba(2,132,199,0.1); color: #0284c7; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(2,132,199,0.3);">
+                            <i data-lucide="zap" style="width: 14px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i> Premium
+                        </span>
+                        
+                        <div class="tooltip-demo" style="margin-left: auto; display: flex; align-items: center;">
+                            <i data-lucide="info" style="color: #64748b;"></i>
+                            <span class="tooltip-text">Tooltip interativo desenhado com puro CSS!</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Componente Cards -->
+            <div class="glow-card animate-scale-in delay-200 grid-cols-2" style="grid-column: span 2; padding: 3rem; background: rgba(255,255,255,0.6);">
+                <h3 style="font-weight: 800; margin-bottom: 2rem;">Componentes Complexos (Cards & Nav)</h3>
+                <div class="grid grid-cols-3 gap-6">
+                    <!-- Pricing Card inspired by Axiolance -->
+                    <div class="glow-border hover-lift" style="background: white; border-radius: 20px; padding: 2rem; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top:0; left:0; width:100%; height: 4px; background: linear-gradient(90deg, #0d9488, #0ea5e9);"></div>
+                        <h4 style="font-size: 1.5rem; font-weight: 800; margin: 0 0 10px 0;">Plano Pro</h4>
+                        <div style="font-size: 3rem; font-weight: 800; color: #0f172a; margin-bottom: 1rem;">$49<span style="font-size: 1rem; color: #64748b; font-weight: 500;">/mês</span></div>
+                        <ul style="list-style: none; padding: 0; margin: 0 0 2rem 0; display: flex; flex-direction: column; gap: 10px;">
+                            <li class="flex items-center gap-3 text-sm font-bold"><i data-lucide="check" style="color: #0d9488; width: 18px;"></i> Usuários Ilimitados</li>
+                            <li class="flex items-center gap-3 text-sm font-bold"><i data-lucide="check" style="color: #0d9488; width: 18px;"></i> Relatórios Avançados</li>
+                            <li class="flex items-center gap-3 text-sm font-bold color-slate-500"><i data-lucide="x" style="color: #cbd5e1; width: 18px;"></i> Suporte 24/7</li>
+                        </ul>
+                        <button class="button-hover glow-teal" style="width: 100%; padding: 12px; background: #0f172a; color: white; border-radius: 12px; font-weight: 700;">Assinar Agora</button>
+                    </div>
+
+                    <!-- Module Card inspired by Axiolance/Glass -->
+                    <div class="glow-card hover-float" style="background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); border-radius: 20px; padding: 2rem; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                        <div class="animate-pulse" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, rgba(13,148,136,0.1), rgba(14,165,233,0.2)); display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; box-shadow: 0 10px 20px rgba(13,148,136,0.1);">
+                            <i data-lucide="pie-chart" style="width: 40px; height: 40px; color: #0d9488;"></i>
+                        </div>
+                        <h4 style="font-size: 1.25rem; font-weight: 800; margin: 0 0 10px 0;">Análise de Dados</h4>
+                        <p class="text-sm color-slate-500" style="line-height: 1.5;">Card de módulo com hover scale e iconografia centralizada.</p>
+                    </div>
+                    
+                    <!-- Feature Image Card -->
+                    <div class="hover-lift" style="border-radius: 20px; overflow: hidden; position: relative;">
+                        <div class="card-image-hover" style="height: 100%; width: 100%;">
+                            <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=2015&auto=format&fit=crop" style="width: 100%; height: 100%; object-fit: cover;" />
+                        </div>
+                        <div style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 2rem; background: linear-gradient(to top, rgba(15,23,42,0.9), transparent);">
+                            <span class="tag-hover" style="padding: 4px 12px; background: #0ea5e9; color: white; border-radius: 99px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase;">Novidade</span>
+                            <h4 style="color: white; font-size: 1.5rem; font-weight: 800; margin: 10px 0 0 0;">Inteligência AI</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Ícones & Animações -->
+    <section id="icones" class="section-container">
+        <h2 class="section-title animate-slide-up">Ícones & Motion</h2>
+        
+        <div class="grid grid-cols-2 gap-8">
+            <div class="glow-card p-6 animate-scale-in" style="padding: 3rem; background: white;">
+                <h3 style="font-weight: 800; margin-bottom: 2rem;">Biblioteca de Ícones (Lucide)</h3>
+                <div class="grid grid-cols-4 gap-6 text-center">
+                    <div class="hover-float" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #f1f5f9; background: #f8fafc;"><i data-lucide="home" style="color: #0f172a; margin: 0 auto; width: 32px; height: 32px;"></i><p class="text-xs font-bold mt-2">Home</p></div>
+                    <div class="hover-float" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #f1f5f9; background: #f8fafc;"><i data-lucide="settings" style="color: #0f172a; margin: 0 auto; width: 32px; height: 32px;"></i><p class="text-xs font-bold mt-2">Settings</p></div>
+                    <div class="hover-float" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #f1f5f9; background: #f8fafc;"><i data-lucide="users" style="color: #0f172a; margin: 0 auto; width: 32px; height: 32px;"></i><p class="text-xs font-bold mt-2">Users</p></div>
+                    <div class="hover-float" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #f1f5f9; background: #f8fafc;"><i data-lucide="bell" style="color: #0d9488; margin: 0 auto; width: 32px; height: 32px;" class="animate-glow"></i><p class="text-xs font-bold mt-2">Alert</p></div>
+                    <div class="hover-float" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #f1f5f9; background: #f8fafc;"><i data-lucide="shield" style="color: #0ea5e9; margin: 0 auto; width: 32px; height: 32px;"></i><p class="text-xs font-bold mt-2">Security</p></div>
+                    <div class="hover-float" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #f1f5f9; background: #f8fafc;"><i data-lucide="zap" style="color: #f59e0b; margin: 0 auto; width: 32px; height: 32px;"></i><p class="text-xs font-bold mt-2">Action</p></div>
+                    <div class="hover-float" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #f1f5f9; background: #f8fafc;"><i data-lucide="cloud" style="color: #0f172a; margin: 0 auto; width: 32px; height: 32px;"></i><p class="text-xs font-bold mt-2">Cloud</p></div>
+                    <div class="hover-float" style="padding: 1.5rem; border-radius: 16px; border: 1px solid #f1f5f9; background: #f8fafc;"><i data-lucide="message-square" style="color: #0f172a; margin: 0 auto; width: 32px; height: 32px;"></i><p class="text-xs font-bold mt-2">Chat</p></div>
+                </div>
+            </div>
+
+            <div class="glow-card p-6 animate-scale-in delay-200" style="padding: 3rem; background: linear-gradient(135deg, #0f172a, #1e293b); color: white;">
+                <h3 style="font-weight: 800; margin-bottom: 2rem; color: white;">Motion & Interação</h3>
+                
+                <div class="flex items-center justify-between mb-6" style="padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div>
+                        <div class="font-bold">.hover-float</div>
+                        <div class="text-sm" style="color: #94a3b8;">Transform translateY, drop-shadow</div>
+                    </div>
+                    <div class="hover-float" style="width: 50px; height: 50px; background: #0d9488; border-radius: 12px; display:flex; align-items:center; justify-content:center;"><i data-lucide="arrow-up" style="color:white;"></i></div>
+                </div>
+                
+                <div class="flex items-center justify-between mb-6" style="padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div>
+                        <div class="font-bold">.animate-glow</div>
+                        <div class="text-sm" style="color: #94a3b8;">Box-shadow infinita pulsante</div>
+                    </div>
+                    <div class="animate-glow" style="width: 50px; height: 50px; background: transparent; border: 2px solid #0d9488; border-radius: 50%;"></div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="font-bold">.interactive-text</div>
+                        <div class="text-sm" style="color: #94a3b8;">Background-clip Text + Hover Scale</div>
+                    </div>
+                    <div style="font-size: 1.5rem;" class="interactive-text font-bold hover-glow">Passe o mouse</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer style="background: #0f172a; padding: 4rem 2rem; text-align: center; color: white; border-top: 5px solid #0d9488; position: relative; z-index: 10;">
+        <div class="flex items-center justify-center gap-4 mb-6">
+            <div class="rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 p-1.5 animate-glow" style="border-radius: 12px; padding: 4px;">
+                <div style="background: #0f172a; border-radius: 10px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="layers" style="color: white;"></i>
+                </div>
+            </div>
+            <div style="font-size: 1.5rem; font-weight: 800;">Facility<span class="interactive-text">DS</span></div>
+        </div>
+        <p style="color: #94a3b8; max-width: 500px; margin: 0 auto;">Design System completo criado com extrema criatividade, combinando estética premium de glassmorphism com a solidez de componentes reais.</p>
+    </footer>
+
+    <script>
+        // Inicializa ícones do Lucide
+        lucide.createIcons();
+
+        // Reveal animations on scroll
+        const observeElements = () => {
+            const elements = document.querySelectorAll('.animate-slide-up, .animate-fade-in, .animate-scale-in');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            elements.forEach(el => {
+                el.style.animationPlayState = 'paused';
+                observer.observe(el);
+            });
+        };
+        
+        document.addEventListener('DOMContentLoaded', observeElements);
+    </script>
+</body>
+</html>
