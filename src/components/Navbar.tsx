@@ -47,7 +47,7 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/login" className="btn-login text-center inline-flex justify-center items-center no-underline">
+          <Link href="/auth/login" className="btn-login text-center inline-flex justify-center items-center no-underline">
             Login
           </Link>
         </div>

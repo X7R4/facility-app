@@ -1,23 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ListChecks, LayoutDashboard, CheckSquare, Square, Info } from "lucide-react";
 
 export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [etiquetas, setEtiquetas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const etiquetasMock = [
-    { id: 1, remetente: "Ponto de Coleta (FIXO)", destinatario: "Marcos Oliveira", valorPonto: 5.00, valorFinal: 25.00, lucro: 20.00, tipo: "SEDEX", status: "Aprovado" },
-    { id: 2, remetente: "Loja do Pedro", destinatario: "Alice Sousa", valorPonto: 8.50, valorFinal: 32.00, lucro: 23.50, tipo: "PAC", status: "Pendente" },
-    { id: 3, remetente: "Ana Maria", destinatario: "Carlos Mendes", valorPonto: 4.20, valorFinal: 18.00, lucro: 13.80, tipo: "PAC", status: "Aprovado" },
-    { id: 4, remetente: "Ponto de Coleta (FIXO)", destinatario: "Roberto Lima", valorPonto: 6.00, valorFinal: 45.00, lucro: 39.00, tipo: "SEDEX", status: "Pendente" },
-  ];
+  useEffect(() => {
+    const fetchEtiquetas = async () => {
+      const token = localStorage.getItem('facility_token');
+      try {
+        const res = await fetch("http://localhost:3000/etiquetas", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setEtiquetas(data);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar etiquetas:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEtiquetas();
+  }, []);
 
   const handleSelectAll = () => {
-    if (selectedIds.length === etiquetasMock.length) setSelectedIds([]);
-    else setSelectedIds(etiquetasMock.map(e => e.id));
+    if (selectedIds.length === etiquetas.length && etiquetas.length > 0) setSelectedIds([]);
+    else setSelectedIds(etiquetas.map(e => e.id));
   };
 
-  const toggleSelect = (id: number) => {
+  const toggleSelect = (id: string) => {
     if (selectedIds.includes(id)) setSelectedIds(selectedIds.filter(i => i !== id));
     else setSelectedIds([...selectedIds, id]);
   };
@@ -52,60 +69,69 @@ export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {
         </div>
       )}
 
-      <div className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-[#121620] border-slate-800/80' : 'bg-white border-slate-200'}`}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className={`border-b text-xs font-bold uppercase tracking-widest ${isDark ? 'bg-slate-900/50 border-slate-800 text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
-                <th className="px-6 py-4 w-10">
-                  <button onClick={handleSelectAll} className="text-blue-500">
-                    {selectedIds.length === etiquetasMock.length ? <CheckSquare size={18} /> : <Square size={18} />}
-                  </button>
-                </th>
-                <th className="px-6 py-4">Remetente</th>
-                <th className="px-6 py-4">Destinatário</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Tipo</th>
-                <th className="px-6 py-4 text-right">Lucro</th>
-                <th className="px-6 py-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/0">
-              {etiquetasMock.map((e) => (
-                <tr key={e.id} className={`group transition-colors ${isDark ? 'hover:bg-slate-800/30' : 'hover:bg-slate-50'}`}>
-                  <td className="px-6 py-4">
-                    <button onClick={() => toggleSelect(e.id)} className={selectedIds.includes(e.id) ? 'text-blue-500' : (isDark ? 'text-slate-700' : 'text-slate-300')}>
-                      {selectedIds.includes(e.id) ? <CheckSquare size={18} /> : <Square size={18} />}
+      {loading ? (
+        <div className="flex justify-center p-8 text-slate-500">Carregando etiquetas...</div>
+      ) : (
+        <div className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-[#121620] border-slate-800/80' : 'bg-white border-slate-200'}`}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className={`border-b text-xs font-bold uppercase tracking-widest ${isDark ? 'bg-slate-900/50 border-slate-800 text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                  <th className="px-6 py-4 w-10">
+                    <button onClick={handleSelectAll} className="text-blue-500">
+                      {selectedIds.length > 0 && selectedIds.length === etiquetas.length ? <CheckSquare size={18} /> : <Square size={18} />}
                     </button>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className={`text-sm font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{e.remetente}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{e.destinatario}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${e.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                      {e.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`text-xs font-bold ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{e.tipo}</span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <p className="text-sm font-bold text-emerald-500">R$ {e.lucro.toFixed(2)}</p>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className={`p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100 ${isDark ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'hover:bg-slate-200 text-slate-400 hover:text-slate-900'}`}>
-                      <Info size={18} />
-                    </button>
-                  </td>
+                  </th>
+                  <th className="px-6 py-4">Remetente</th>
+                  <th className="px-6 py-4">Destinatário</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Tipo</th>
+                  <th className="px-6 py-4 text-right">Objeto</th>
+                  <th className="px-6 py-4"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-800/0">
+                {etiquetas.length === 0 && (
+                  <tr>
+                     <td colSpan={7} className="px-6 py-8 text-center text-sm font-bold text-slate-500">Nenhuma etiqueta gerada ainda.</td>
+                  </tr>
+                )}
+                {etiquetas.map((e) => (
+                  <tr key={e.id} className={`group transition-colors ${isDark ? 'hover:bg-slate-800/30' : 'hover:bg-slate-50'}`}>
+                    <td className="px-6 py-4">
+                      <button onClick={() => toggleSelect(e.id)} className={selectedIds.includes(e.id) ? 'text-blue-500' : (isDark ? 'text-slate-700' : 'text-slate-300')}>
+                        {selectedIds.includes(e.id) ? <CheckSquare size={18} /> : <Square size={18} />}
+                      </button>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className={`text-sm font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{e.remetente}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{e.destinatario}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${e.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' : e.status === 'Falhou' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                        {e.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`text-xs font-bold ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{e.tipo}</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <p className="text-sm font-bold text-blue-500">{e.codigoObjeto}</p>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className={`p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100 ${isDark ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'hover:bg-slate-200 text-slate-400 hover:text-slate-900'}`}>
+                        <Info size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

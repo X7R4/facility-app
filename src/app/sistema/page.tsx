@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import gsap from "gsap";
 import { 
   LayoutDashboard, 
@@ -13,9 +13,11 @@ import {
   Sun,
   Moon,
   Users,
-  ListChecks
+  ListChecks,
+  LogOut
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // COMPONENTES EXTRAÍDOS
 import SidebarItem from "./components/SidebarItem";
@@ -31,11 +33,39 @@ import ViewConfiguracoes from "./components/ViewConfiguracoes";
 type Tab = 'dashboard' | 'etiquetas' | 'cotacao' | 'pre-postagem' | 'clientes' | 'reversa' | 'configuracoes';
 
 export default function SistemaDashboard() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isDark, setIsDark] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // For mobile responsiveness
+  const [userRole, setUserRole] = useState<string>('user');
 
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Verificação de Auth JWT
+  useEffect(() => {
+    const token = localStorage.getItem('facility_token');
+    if (!token) {
+      router.push('/auth/login');
+      return;
+    }
+    try {
+      // Decode JWT minimal manual info
+      const base64Url = token.split('.')[1];
+      let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) {
+        base64 += '=';
+      }
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      const parsedToken = JSON.parse(jsonPayload);
+      setUserRole(parsedToken.role || 'user');
+    } catch(e) {
+      console.warn("Token inválido");
+      localStorage.removeItem('facility_token');
+      router.push('/auth/login');
+    }
+  }, [router]);
 
   // Smooth switch animation for tabs
   const handleTabChange = (newTab: Tab) => {
@@ -58,6 +88,11 @@ export default function SistemaDashboard() {
     } else {
       setActiveTab(newTab);
     }
+  };
+
+  const handleLogout = () => {
+     localStorage.removeItem('token');
+     router.push('/auth/login');
   };
 
   useLayoutEffect(() => {
@@ -176,6 +211,9 @@ export default function SistemaDashboard() {
                  <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix&backgroundColor=transparent" alt="User" className="w-full h-full object-cover" />
                </div>
             </div>
+            <button onClick={handleLogout} className={`p-2 rounded-xl transition-all relative ${isDark ? 'hover:bg-red-500/20 text-slate-400 hover:text-red-500' : 'hover:bg-red-50 text-slate-500 hover:text-red-500'}`} title="Sair do Sistema">
+               <LogOut size={20} />
+            </button>
           </div>
         </header>
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, UserPlus, Edit2, ChevronRight, ArrowLeft } from "lucide-react";
 import InputField from "./InputField";
 
@@ -6,11 +6,40 @@ export default function ViewClientes({ isDark }: { isDark: boolean }) {
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [isAdding, setIsAdding] = useState(false);
 
-  const clientsMock = [
-    { id: 1, nome: "Marcos Oliveira", cpf: "123.456.789-00", telefone: "(11) 98888-7777", email: "marcos@email.com", endereco: "Rua das Flores, 123 - Centro, SP", etiquetas: 12, pref: "SEDEX" },
-    { id: 2, nome: "Alice Sousa", cpf: "987.654.321-11", telefone: "(21) 97777-6666", email: "alice@site.com", endereco: "Av. Brasil, 500 - Rio de Janeiro, RJ", etiquetas: 5, pref: "PAC" },
-    { id: 3, nome: "Marcos Oliveira", cpf: "123.456.789-00", telefone: "(11) 98888-7777", email: "marcos@email.com", endereco: "Rua das Flores, 123 - Centro, SP", etiquetas: 2, pref: "SEDEX" },
-  ];
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClientes = async () => {
+      const token = localStorage.getItem('facility_token');
+      try {
+        const res = await fetch("http://localhost:3000/clientes", {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (res.ok) {
+           const data = await res.json();
+           const dbClientes = data.map((c: any) => ({
+             id: c._id,
+             nome: c.nome,
+             cpf: c.cpfCnpj,
+             telefone: c.telefone,
+             email: c.email || 'Não informado',
+             endereco: `${c.endereco.logradouro}, ${c.endereco.numero} - ${c.endereco.bairro}, ${c.endereco.cidade}/${c.endereco.uf}`,
+             etiquetas: c.etiquetas || 0,
+             pref: 'N/A'
+           }));
+           setClientes(dbClientes);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar clientes", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClientes();
+  }, []);
 
   if (isAdding) {
     return (
@@ -92,11 +121,13 @@ export default function ViewClientes({ isDark }: { isDark: boolean }) {
       </div>
 
       <div className={`rounded-2xl border ${isDark ? 'bg-[#121620] border-slate-800/80' : 'bg-white border-slate-200'} shadow-sm divide-y transition-colors`}>
-         {clientsMock.map((c, i) => (
+         {loading && <div className="p-8 text-center text-sm font-bold text-slate-500">Carregando clientes...</div>}
+         {!loading && clientes.length === 0 && <div className="p-8 text-center text-sm font-bold text-slate-500">Nenhum cliente cadastrado.</div>}
+         {!loading && clientes.map((c, i) => (
            <div 
-             key={i} 
+             key={c.id} 
              onClick={() => setSelectedClient(c)}
-             className={`p-5 flex items-center justify-between group cursor-pointer transition-colors ${i === 0 ? 'rounded-t-2xl' : ''} ${i === clientsMock.length - 1 ? 'rounded-b-2xl' : ''} ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
+             className={`p-5 flex items-center justify-between group cursor-pointer transition-colors ${i === 0 ? 'rounded-t-2xl' : ''} ${i === clientes.length - 1 ? 'rounded-b-2xl' : ''} ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
            >
              <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-400'}`}>
