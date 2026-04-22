@@ -1,8 +1,6 @@
-import { useLayoutEffect } from "react";
+import { useLayoutEffect, useState, useEffect } from "react";
 import gsap from "gsap";
 import { Package, DollarSign, TrendingUp } from "lucide-react";
-
-const BAR_DATA = [12, 19, 14, 22, 28, 25, 30, 26, 40, 36, 45, 55, 42, 60, 50, 70];
 
 function MetricCard({ title, value, change, icon, color, isDark }: { title: string, value: string, change: string, icon: React.ReactNode, color: string, isDark: boolean }) {
   const colorMap: Record<string, string> = {
@@ -29,19 +27,52 @@ function MetricCard({ title, value, change, icon, color, isDark }: { title: stri
 }
 
 export default function ViewDashboard({ isDark }: { isDark: boolean }) {
-  
-  useLayoutEffect(() => {
-    gsap.fromTo(
-      ".dash-stagger",
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "back.out(1.2)" }
-    );
-    gsap.fromTo(
-      ".chart-bar",
-      { height: 0 },
-      { height: (i: number, target: any) => target.dataset.h + "%", duration: 1, stagger: 0.02, ease: "power3.out", delay: 0.4 }
-    );
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const token = localStorage.getItem('facility_token');
+      try {
+        const res = await fetch("http://localhost:3000/dashboard", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar stats do dashboard", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
   }, []);
+
+  useLayoutEffect(() => {
+    if (!loading) {
+      gsap.fromTo(
+        ".dash-stagger",
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: "back.out(1.2)" }
+      );
+      gsap.fromTo(
+        ".chart-bar",
+        { height: 0 },
+        { height: (i: number, target: any) => target.dataset.h + "%", duration: 1, stagger: 0.02, ease: "power3.out", delay: 0.4 }
+      );
+    }
+  }, [loading, stats]);
+
+  if (loading) {
+    return <div className="flex justify-center p-8 text-slate-500">Carregando dashboard...</div>;
+  }
+
+  const formatMoney = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+  // Calcula os valores maximos para a altura do grafico (0 a 100%)
+  const maxChartVal = stats?.chartData?.reduce((max: number, d: any) => Math.max(max, d.pac + d.sedex), 1) || 1;
 
   return (
     <div className="space-y-8 pb-8">
@@ -55,10 +86,10 @@ export default function ViewDashboard({ isDark }: { isDark: boolean }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 dash-stagger">
-        <MetricCard isDark={isDark} title="Etiquetas Geradas" value="1,202" change="+12%" icon={<Package size={18} />} color="blue" />
-        <MetricCard isDark={isDark} title="Margem Total (R$)" value="R$ 14.500,80" change="+5.4%" icon={<DollarSign size={18} />} color="teal" />
-        <MetricCard isDark={isDark} title="Margem Média/Etiq." value="R$ 12,05" change="+1.2%" icon={<TrendingUp size={18} />} color="indigo" />
-        <MetricCard isDark={isDark} title="Lucro Líquido" value="R$ 4.250,00" change="+8.1%" icon={<DollarSign size={18} />} color="emerald" />
+        <MetricCard isDark={isDark} title="Etiquetas Geradas" value={stats?.totalEtiquetas.toString() || "0"} change="" icon={<Package size={18} />} color="blue" />
+        <MetricCard isDark={isDark} title="Margem Total (R$)" value={formatMoney(stats?.margemTotal || 0)} change="" icon={<DollarSign size={18} />} color="teal" />
+        <MetricCard isDark={isDark} title="Margem Média/Etiq." value={formatMoney(stats?.margemMedia || 0)} change="" icon={<TrendingUp size={18} />} color="indigo" />
+        <MetricCard isDark={isDark} title="Lucro Líquido" value={formatMoney(stats?.lucroLiquido || 0)} change="" icon={<DollarSign size={18} />} color="emerald" />
       </div>
 
       {/* Chart Section */}
@@ -75,17 +106,31 @@ export default function ViewDashboard({ isDark }: { isDark: boolean }) {
         </div>
 
         <div className="h-56 flex items-end justify-between gap-1 sm:gap-2">
-          {BAR_DATA.map((val, i) => (
-            <div key={i} className="flex-1 flex flex-col justify-end items-center gap-1 h-full group">
-              <div className="w-full relative h-[80%] flex flex-col justify-end rounded-t-sm overflow-hidden">
-                {/* Simulated Chart Bars */}
-                <div 
-                  className={`chart-bar w-full rounded-t-sm transition-all duration-300 ${isDark ? 'bg-slate-700/50 group-hover:bg-blue-500/80' : 'bg-slate-200 group-hover:bg-blue-500'}`}
-                  data-h={val}
-                />
+          {stats?.chartData?.map((data: any, i: number) => {
+            const pacPercent = ((data.pac / maxChartVal) * 100) || 0;
+            const sedexPercent = ((data.sedex / maxChartVal) * 100) || 0;
+            return (
+              <div key={i} className="flex-1 flex flex-col justify-end items-center gap-1 h-full group">
+                <div className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity font-bold text-slate-500 mb-1">
+                  {new Date(data.date).getDate()}/{new Date(data.date).getMonth() + 1}
+                </div>
+                <div className="w-full relative h-[80%] flex flex-col justify-end rounded-t-sm overflow-hidden gap-[1px]">
+                  {/* SEDEX BAR */}
+                  <div 
+                    className={`chart-bar w-full rounded-t-sm transition-all duration-300 ${isDark ? 'bg-teal-500/80' : 'bg-teal-400'}`}
+                    data-h={sedexPercent}
+                    title={`SEDEX: ${data.sedex}`}
+                  />
+                  {/* PAC BAR */}
+                  <div 
+                    className={`chart-bar w-full rounded-t-sm transition-all duration-300 ${isDark ? 'bg-blue-500/80' : 'bg-blue-500'}`}
+                    data-h={pacPercent}
+                    title={`PAC: ${data.pac}`}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

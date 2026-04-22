@@ -1,15 +1,29 @@
 import { useState, useEffect } from "react";
-import { ListChecks, LayoutDashboard, CheckSquare, Square, Info } from "lucide-react";
+import { ListChecks, LayoutDashboard, CheckSquare, Square, Info, Receipt } from "lucide-react";
+import ViewReciboModal from "./ViewReciboModal";
 
 export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [etiquetas, setEtiquetas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRecibo, setSelectedRecibo] = useState<any>(null);
+  const [pontoColetaNome, setPontoColetaNome] = useState("");
 
   useEffect(() => {
     const fetchEtiquetas = async () => {
       const token = localStorage.getItem('facility_token');
+      if (token) {
+        try {
+          const profileRes = await fetch("http://localhost:3000/auth/me", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            setPontoColetaNome(profileData.nomePonto || profileData.nome || "Ponto de Coleta");
+          }
+        } catch (e) {}
+      }
       try {
         const res = await fetch("http://localhost:3000/etiquetas", {
           headers: {
@@ -86,6 +100,9 @@ export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {
                   <th className="px-6 py-4">Destinatário</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4">Tipo</th>
+                  <th className="px-6 py-4 text-right">Custo Plataforma</th>
+                  <th className="px-6 py-4 text-right">Valor Cliente</th>
+                  <th className="px-6 py-4 text-right">Seu Lucro</th>
                   <th className="px-6 py-4 text-right">Objeto</th>
                   <th className="px-6 py-4"></th>
                 </tr>
@@ -118,9 +135,31 @@ export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {
                       <span className={`text-xs font-bold ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{e.tipo}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <p className="text-sm font-bold text-blue-500">{e.codigoObjeto}</p>
+                      <p className={`text-sm font-bold ${isDark ? 'text-rose-400' : 'text-rose-600'}`}>
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(e.valorBaseUsuario || 0)}
+                      </p>
                     </td>
                     <td className="px-6 py-4 text-right">
+                      <p className={`text-sm font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(e.valorFinal || 0)}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <p className={`text-sm font-black ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(e.lucroUsuario || 0)}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <p className="text-sm font-bold text-blue-500">{e.codigoObjeto}</p>
+                    </td>
+                    <td className="px-6 py-4 text-right flex justify-end gap-2">
+                      <button 
+                        onClick={() => setSelectedRecibo(e)}
+                        className={`p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100 ${isDark ? 'hover:bg-blue-900/30 text-blue-400 hover:text-blue-300' : 'hover:bg-blue-100 text-blue-600 hover:text-blue-800'}`}
+                        title="Ver Recibo"
+                      >
+                        <Receipt size={18} />
+                      </button>
                       <button className={`p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100 ${isDark ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'hover:bg-slate-200 text-slate-400 hover:text-slate-900'}`}>
                         <Info size={18} />
                       </button>
@@ -131,6 +170,14 @@ export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {
             </table>
           </div>
         </div>
+      )}
+
+      {selectedRecibo && (
+        <ViewReciboModal 
+          etiqueta={selectedRecibo} 
+          pontoColetaNome={pontoColetaNome} 
+          onClose={() => setSelectedRecibo(null)} 
+        />
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { CheckCircle2, Search, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, Search, AlertCircle, Loader2, Receipt } from "lucide-react";
 import InputField from "./InputField";
+import ViewReciboModal from "./ViewReciboModal";
 
 export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   const [senderMode, setSenderMode] = useState<"fixed" | "existing" | "new">("fixed");
@@ -8,6 +9,88 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
 
   // Workflow states
   const [isLoading, setIsLoading] = useState(false);
+  const [simulation, setSimulation] = useState<any[]>([]);
+  const [loadingPrice, setLoadingPrice] = useState(false);
+  
+  // Recibo States
+  const [geradoEtiquetaData, setGeradoEtiquetaData] = useState<any>(null);
+  const [pontoColetaNome, setPontoColetaNome] = useState("");
+  const [showRecibo, setShowRecibo] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('facility_token');
+    fetch('http://localhost:3000/auth/me', {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data) {
+          setPontoColetaNome(data.nomePonto || data.nome || "Ponto de Coleta");
+        }
+      })
+      .catch(e => console.error(e));
+  }, []);
+  
+  // Efeito para buscar preço ao chegar no Passo 3
+  useEffect(() => {
+    if (currentStep === 3) {
+      fetchPriceSimulation();
+    }
+  }, [currentStep]);
+
+  const fetchPriceSimulation = async () => {
+    setLoadingPrice(true);
+    try {
+      const payload = {
+        idLote: "1",
+        parametrosProduto: [
+          {
+            coProduto: "03220", // SEDEX
+            nuRequisicao: "1",
+            nuContrato: formData.numeroCartaoPostagem,
+            nuDR: "20",
+            cepOrigem: formData.remetente.endereco.cep.replace(/\D/g, ""),
+            cepDestino: formData.destinatario.endereco.cep.replace(/\D/g, ""),
+            psObjeto: formData.pesoInformado,
+            tpObjeto: formData.codigoFormatoObjetoInformado,
+            comprimento: formData.comprimentoInformado,
+            largura: formData.larguraInformada,
+            altura: formData.alturaInformada
+          },
+          {
+            coProduto: "03298", // PAC
+            nuRequisicao: "2",
+            nuContrato: formData.numeroCartaoPostagem,
+            nuDR: "20",
+            cepOrigem: formData.remetente.endereco.cep.replace(/\D/g, ""),
+            cepDestino: formData.destinatario.endereco.cep.replace(/\D/g, ""),
+            psObjeto: formData.pesoInformado,
+            tpObjeto: formData.codigoFormatoObjetoInformado,
+            comprimento: formData.comprimentoInformado,
+            largura: formData.larguraInformada,
+            altura: formData.alturaInformada
+          }
+        ]
+      };
+
+      const res = await fetch(`http://localhost:3000/consulta/simularFrete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('facility_token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data) {
+        setSimulation(data);
+      }
+    } catch (e) {
+      console.error("Erro na simulação", e);
+    } finally {
+      setLoadingPrice(false);
+    }
+  };
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -51,15 +134,33 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
     avisoRecebimento: false
   });
 
-  // Load Fixed Ponto
+  // Load Fixed Ponto (from User Profile)
   useEffect(() => {
-    fetch(`${API_BASE}/pontocoleta`)
+    const token = localStorage.getItem('facility_token');
+    fetch('http://localhost:3000/auth/me', {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
       .then(r => r.json())
       .then(data => {
-        if (data && data.nome) {
-          setFixedPonto(data);
+        if (data && (data.nomePonto || data.nome)) {
+          const profilePonto = {
+            nome: data.nomePonto || data.nome,
+            cpfCnpj: data.cpf,
+            telefone: data.telefonePonto || data.telefone,
+            email: data.email,
+            endereco: {
+              cep: data.enderecoPonto?.cep || "",
+              logradouro: data.enderecoPonto?.logradouro || "",
+              numero: data.enderecoPonto?.numero || "",
+              bairro: data.enderecoPonto?.bairro || "",
+              cidade: data.enderecoPonto?.cidade || "",
+              uf: data.enderecoPonto?.uf || "",
+              pais: "BR"
+            }
+          };
+          setFixedPonto(profilePonto);
           if (senderMode === "fixed") {
-            setFormData(prev => ({ ...prev, remetente: data }));
+            setFormData(prev => ({ ...prev, remetente: profilePonto }));
           }
         }
       })
@@ -261,6 +362,24 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
 
       // 4. Download DCe foi migrado para o próprio PDF no Backend! O PDF já chegará "batizado"
       // com a Logo Customizada e o QR Code DACE da Facility Envios!
+
+      // 5. Preencher dados para o Recibo
+      const simMatch = simulation.find(s => (formData.codigoServico === "03220" ? s.coProduto === "03220" : s.coProduto === "03298"));
+      setGeradoEtiquetaData({
+        codigoObjeto: codigoObjeto,
+        remetente: formData.remetente.nome,
+        remetenteTelefone: formData.remetente.celular || formData.remetente.telefone,
+        destinatario: formData.destinatario.nome,
+        destinatarioCep: formData.destinatario.endereco.cep,
+        destinatarioCidade: formData.destinatario.endereco.cidade,
+        destinatarioUf: formData.destinatario.endereco.uf,
+        tipo: formData.codigoServico === '03220' ? 'SEDEX' : 'PAC',
+        peso: formData.pesoInformado,
+        medidas: `${formData.comprimentoInformado}x${formData.larguraInformada}x${formData.alturaInformada} cm`,
+        valorFinal: parseFloat(simMatch?.pcFinal || "0"),
+        prazoEntrega: parseInt(simMatch?.prazoEntrega || "5"),
+        createdAt: new Date().toISOString()
+      });
 
     } catch (error: any) {
       console.error(error);
@@ -526,6 +645,38 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
                     <input type="checkbox" id="av" checked={formData.avisoRecebimento} onChange={(e: any) => handleInputChange("root", "avisoRecebimento", e.target.checked)} className="w-5 h-5 accent-blue-600 rounded cursor-pointer" />
                     <label htmlFor="av" className={`text-sm font-semibold cursor-pointer select-none ${isDark ? "text-blue-400" : "text-blue-700"}`}>Desejo Aviso de Recebimento (AR)</label>
                   </div>
+
+                  {/* Exibição do Preço e Prazo Simulado */}
+                  <div className={`w-full p-4 rounded-xl border ${isDark ? "bg-[#121620] border-slate-800" : "bg-white border-slate-200 shadow-sm"}`}>
+                    {loadingPrice ? (
+                      <div className="flex items-center justify-center py-4 gap-3 text-sm text-slate-500">
+                        <Loader2 size={18} className="animate-spin" /> Consultando Preço e Prazo...
+                      </div>
+                    ) : (
+                      <>
+                        {Array.isArray(simulation) && simulation.filter(s => (formData.codigoServico === "03220" ? s.coProduto === "03220" : s.coProduto === "03298")).map((sim, i) => (
+                          <div key={i} className="flex items-center justify-between">
+                            <div>
+                              <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Valor Estimado</p>
+                              <div className="flex items-baseline gap-2">
+                                <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>R$ {sim.pcFinal}</p>
+                                {sim.custoParaUsuario && parseFloat(sim.pcFinal) > parseFloat(sim.custoParaUsuario) && (
+                                  <span className="text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                    + R$ {(parseFloat(sim.pcFinal) - parseFloat(sim.custoParaUsuario)).toFixed(2)} Lucro
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Prazo</p>
+                              <p className={`text-sm font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{sim.prazoEntrega} dias úteis</p>
+                            </div>
+                          </div>
+                        ))}
+                        {(!Array.isArray(simulation) || simulation.length === 0) && !loadingPrice && <p className="text-center text-xs text-red-500 py-2">Não foi possível calcular o frete para estes dados.</p>}
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -571,9 +722,28 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
                 </div>
               </div>
             )}
+            
+            {/* Box Recibo */}
+            {geradoEtiquetaData && (
+              <div className={`p-4 rounded-2xl border shadow-sm ${isDark ? "bg-[#121620] border-slate-800/80" : "bg-emerald-50 border-emerald-200"}`}>
+                <h3 className={`font-bold mb-3 ${isDark ? "text-slate-200" : "text-emerald-700"}`}>Comprovante Final</h3>
+                <p className={`text-xs mb-3 ${isDark ? "text-slate-400" : "text-emerald-600"}`}>Gere o recibo do cliente para impressão na térmica ou envio por WhatsApp.</p>
+                <button onClick={() => setShowRecibo(true)} className={`w-full py-3 flex justify-center items-center gap-2 text-sm font-bold border rounded-lg transition-colors ${isDark ? 'border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400' : 'border-emerald-300 bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-500/20'}`}>
+                  <Receipt size={18} /> Ver Recibo Cliente
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {showRecibo && geradoEtiquetaData && (
+        <ViewReciboModal 
+          etiqueta={geradoEtiquetaData}
+          pontoColetaNome={pontoColetaNome}
+          onClose={() => setShowRecibo(false)}
+        />
+      )}
     </div>
   );
 }
