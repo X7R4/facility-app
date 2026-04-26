@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle2, Search, AlertCircle, Loader2, Receipt } from "lucide-react";
+import { CheckCircle2, Search, AlertCircle, Loader2, Receipt, Printer, Download } from "lucide-react";
 import InputField from "./InputField";
 import ViewReciboModal from "./ViewReciboModal";
 import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
@@ -876,9 +876,28 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
                     <p className="p-4 text-xs">Seu navegador não suporta view de PDF in-line. <a href={pdfUrl} target="_blank" rel="noreferrer" className="text-blue-500">Baixar PDF</a></p>
                   </object>
                 </div>
-                <a href={pdfUrl} download="etiqueta_correios.pdf" className={`mt-3 w-full py-2 flex justify-center text-sm font-bold border rounded-lg transition-colors ${isDark ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700'}`}>
-                  Baixar PDF
-                </a>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => {
+                      const win = window.open(pdfUrl, '_blank');
+                      win?.addEventListener('load', () => win.print());
+                    }}
+                    className={`flex-1 py-2 flex justify-center items-center gap-2 text-sm font-bold border rounded-lg transition-colors ${
+                      isDark ? 'border-blue-500/40 hover:bg-blue-600/20 text-blue-400' : 'border-blue-300 bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/20'
+                    }`}
+                  >
+                    <Printer size={16} /> Imprimir Etiqueta
+                  </button>
+                  <a
+                    href={pdfUrl}
+                    download="etiqueta_correios.pdf"
+                    className={`flex-1 py-2 flex justify-center items-center gap-2 text-sm font-bold border rounded-lg transition-colors ${
+                      isDark ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-300 hover:bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    <Download size={16} /> Baixar PDF
+                  </a>
+                </div>
               </div>
             )}
 

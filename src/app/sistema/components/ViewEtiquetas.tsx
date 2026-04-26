@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ListChecks, LayoutDashboard, CheckSquare, Square, Receipt, FileText, QrCode, Printer, RefreshCw } from "lucide-react";
+import { ListChecks, LayoutDashboard, CheckSquare, Square, Receipt, FileText, QrCode, Printer, RefreshCw, Download } from "lucide-react";
 import ViewReciboModal from "./ViewReciboModal";
 import ViewPixModal from "./ViewPixModal";
 
@@ -44,7 +44,22 @@ export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {
     // Só permite se status Aprovado e pago
     if (e.status !== 'Aprovado' || e.pagamentoStatus === 'Pendente') return;
     const id = e._id || e.id;
-    window.open(`${API_BASE}/prepostagem/pdf-salvo/${id}?token=${token()}`, '_blank');
+    const url = `${API_BASE}/prepostagem/pdf-salvo/${id}?token=${token()}`;
+    const win = window.open(url, '_blank');
+    win?.addEventListener('load', () => win.print());
+  };
+
+  const handleDownloadEtiqueta = (e: any) => {
+    if (e.status !== 'Aprovado' || e.pagamentoStatus === 'Pendente') return;
+    const id = e._id || e.id;
+    const url = `${API_BASE}/prepostagem/pdf-salvo/${id}?token=${token()}`;
+    // Cria link temporário para forçar download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `etiqueta_${e.codigoObjeto || id}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handlePayEtiqueta = (e: any) => {
@@ -185,7 +200,10 @@ export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {
               {etiquetas.map((e) => {
                 const id = e._id || e.id;
                 const isAprovado = e.status === 'Aprovado';
-                const isPago     = e.pagamentoStatus === 'Pago' || e.pagamentoStatus === 'Isento';
+                // Isento = autorizadoSemPagamento | Pago = pagou via MP | undefined = dado antigo sem campo
+                const isPago     = e.pagamentoStatus === 'Pago'
+                  || e.pagamentoStatus === 'Isento'
+                  || e.pagamentoStatus == null; // fallback para registros anteriores sem o campo
                 const canPrint   = isAprovado && isPago;
 
                 return (
@@ -241,15 +259,24 @@ export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {
                     <td className="px-3 py-3">
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
 
-                        {/* Imprimir — só Aprovado+Pago */}
+                        {/* Imprimir + Baixar — só Aprovado+Pago */}
                         {canPrint ? (
-                          <button
-                            onClick={() => handlePrintEtiqueta(e)}
-                            className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-emerald-900/30 text-emerald-400' : 'hover:bg-emerald-50 text-emerald-600'}`}
-                            title="Imprimir Etiqueta (PDF)"
-                          >
-                            <Printer size={15} />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handlePrintEtiqueta(e)}
+                              className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-emerald-900/30 text-emerald-400' : 'hover:bg-emerald-50 text-emerald-600'}`}
+                              title="Imprimir Etiqueta (PDF)"
+                            >
+                              <Printer size={15} />
+                            </button>
+                            <button
+                              onClick={() => handleDownloadEtiqueta(e)}
+                              className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-blue-900/30 text-blue-400' : 'hover:bg-blue-50 text-blue-600'}`}
+                              title="Baixar PDF da Etiqueta"
+                            >
+                              <Download size={15} />
+                            </button>
+                          </>
                         ) : !isPago ? (
                           <button
                             onClick={() => handlePayEtiqueta(e)}
