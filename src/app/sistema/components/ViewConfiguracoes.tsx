@@ -13,7 +13,7 @@ export default function ViewConfiguracoes({ isDark, isDarkGlobal, setIsDarkGloba
 
   const fetchUserData = async () => {
     try {
-      const res = await fetch('http://localhost:4000/auth/me', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/me`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('facility_token')}` }
       });
       const data = await res.json();
@@ -44,7 +44,7 @@ export default function ViewConfiguracoes({ isDark, isDarkGlobal, setIsDarkGloba
   const saveRules = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch('http://localhost:4000/auth/regras-ponto', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/regras-ponto`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

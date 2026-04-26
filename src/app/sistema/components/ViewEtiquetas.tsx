@@ -3,7 +3,7 @@ import { ListChecks, LayoutDashboard, CheckSquare, Square, Receipt, FileText, Qr
 import ViewReciboModal from "./ViewReciboModal";
 import ViewPixModal from "./ViewPixModal";
 
-const API_BASE = "http://localhost:4000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {

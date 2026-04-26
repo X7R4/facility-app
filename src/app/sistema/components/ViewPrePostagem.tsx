@@ -33,7 +33,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
 
   useEffect(() => {
     const token = localStorage.getItem('facility_token');
-    fetch('http://localhost:4000/auth/me', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/me`, {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(r => r.json())
@@ -87,7 +87,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
         ]
       };
 
-      const res = await fetch(`http://localhost:4000/consulta/simularFrete`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/consulta/simularFrete`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,7 +115,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   const [clientSearchResults, setClientSearchResults] = useState<any[]>([]);
   const [selectedClient, setSelectedClient] = useState<any>(null);
 
-  const API_BASE = "http://localhost:4000";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
   const API_PRE  = `${API_BASE}/prepostagem`;
 
   // Form State
@@ -152,7 +152,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   // Load Fixed Ponto (from User Profile)
   useEffect(() => {
     const token = localStorage.getItem('facility_token');
-    fetch('http://localhost:4000/auth/me', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/me`, {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(r => r.json())
@@ -446,7 +446,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   const onPaymentSubmit = async ({ formData: mpFormData }: any) => {
     try {
       const token = localStorage.getItem('facility_token');
-      const response = await fetch(`http://localhost:4000/pix/processar/${pixEtiquetaId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/pix/processar/${pixEtiquetaId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -486,7 +486,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
     const interval = setInterval(async () => {
       try {
         const token = localStorage.getItem('facility_token');
-        const res = await fetch(`http://localhost:4000/pix/status/${pixEtiquetaId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/pix/status/${pixEtiquetaId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {

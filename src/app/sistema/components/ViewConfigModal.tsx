@@ -32,7 +32,7 @@ export default function ViewConfigModal({ onClose, isDark, onSaved }: ViewConfig
     const fetchPerfil = async () => {
       try {
         const token = localStorage.getItem('facility_token');
-        const res = await fetch('http://localhost:4000/auth/me', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/me`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {
@@ -113,7 +113,7 @@ export default function ViewConfigModal({ onClose, isDark, onSaved }: ViewConfig
     setLoading(true);
     try {
       const token = localStorage.getItem('facility_token');
-      const res = await fetch('http://localhost:4000/auth/perfil', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/perfil`, {
         method: 'PUT',
         headers: {
           "Content-Type": "application/json",

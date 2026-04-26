@@ -46,7 +46,7 @@ export default function ViewCotacao({ isDark }: { isDark: boolean }) {
   const [cepOrigem, setCepOrigem] = useState("13206305");
   const [cepDestino, setCepDestino] = useState("");
 
-  const API_BASE = "http://localhost:4000";
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
   const performQuote = async () => {
     if (!cepDestino || cepDestino.replace(/\D/g, "").length < 8) {

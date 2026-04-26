@@ -35,7 +35,7 @@ export default function ViewPixModal({
         const token = localStorage.getItem('facility_token');
         // We check any of the etiqueta IDs
         const checkId = pixInfo.idsEtiquetas ? pixInfo.idsEtiquetas[0] : pixInfo.idEtiqueta;
-        const res = await fetch(`http://localhost:4000/pix/status/${checkId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/pix/status/${checkId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -63,7 +63,7 @@ export default function ViewPixModal({
       const targetId = pixInfo.idsEtiquetas ? 'multiple' : pixInfo.idEtiqueta;
       const token = localStorage.getItem('facility_token');
 
-      const response = await fetch(`http://localhost:4000/pix/processar/${targetId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/pix/processar/${targetId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
