@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import gsap from "gsap";
 import { ArrowLeft, Mail, Lock, AlertCircle } from "lucide-react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/auth";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/auth";
 
 export default function LoginPage() {
   const router = useRouter();

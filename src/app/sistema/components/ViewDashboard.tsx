@@ -34,7 +34,7 @@ export default function ViewDashboard({ isDark }: { isDark: boolean }) {
     const fetchStats = async () => {
       const token = localStorage.getItem('facility_token');
       try {
-        const res = await fetch("http://localhost:3000/dashboard", {
+        const res = await fetch("http://localhost:4000/dashboard", {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ShieldCheck, UserCheck, ShieldAlert, ArrowRight, Settings2, X, Plus, Trash2 } from "lucide-react";
+import { ShieldCheck, UserCheck, ShieldAlert, ArrowRight, Settings2, X, Plus, Trash2, KeyRound, RefreshCw, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 
 export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
   const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -11,15 +11,46 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [newPassword, setNewPassword] = useState('');
 
+  // Correios Token Status
+  const [tokenStatus, setTokenStatus] = useState<any>(null);
+  const [tokenLoading, setTokenLoading] = useState(false);
+  const [tokenRefreshing, setTokenRefreshing] = useState(false);
+
   useEffect(() => {
     fetchUsuarios();
+    fetchTokenStatus();
   }, []);
+
+  const fetchTokenStatus = async () => {
+    setTokenLoading(true);
+    try {
+      const token = localStorage.getItem('facility_token');
+      const res = await fetch('http://localhost:4000/admin/correios/token-status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setTokenStatus(await res.json());
+    } catch (e) { /* silent */ } finally { setTokenLoading(false); }
+  };
+
+  const handleForceTokenRefresh = async () => {
+    setTokenRefreshing(true);
+    try {
+      const token = localStorage.getItem('facility_token');
+      const res = await fetch('http://localhost:4000/admin/correios/token-refresh', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) { setTokenStatus(data); alert('Token renovado com sucesso!'); }
+      else alert('Erro: ' + data.mensagem);
+    } catch (e) { alert('Falha na renovação.'); } finally { setTokenRefreshing(false); }
+  };
 
   const fetchUsuarios = async () => {
     setLoading(true);
     const token = localStorage.getItem('facility_token');
     try {
-      const res = await fetch("http://localhost:3000/admin/usuarios", {
+      const res = await fetch("http://localhost:4000/admin/usuarios", {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -40,7 +71,7 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
   const updateUser = async (id: string, payload: any) => {
      const token = localStorage.getItem('facility_token');
      try {
-       const res = await fetch(`http://localhost:3000/admin/usuarios/${id}`, {
+       const res = await fetch(`http://localhost:4000/admin/usuarios/${id}`, {
          method: 'PUT',
          headers: {
            "Authorization": `Bearer ${token}`,
@@ -86,7 +117,7 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
     setNewPassword('');
     const token = localStorage.getItem('facility_token');
     try {
-      const res = await fetch(`http://localhost:3000/admin/usuarios/${user._id}/detalhes`, {
+      const res = await fetch(`http://localhost:4000/admin/usuarios/${user._id}/detalhes`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -103,7 +134,7 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
     if (!confirm("Tem certeza que deseja resetar a senha deste usuário? A nova senha será exibida na tela.")) return;
     const token = localStorage.getItem('facility_token');
     try {
-      const res = await fetch(`http://localhost:3000/admin/usuarios/${viewingDetails._id}/reset-senha`, {
+      const res = await fetch(`http://localhost:4000/admin/usuarios/${viewingDetails._id}/reset-senha`, {
         method: 'POST',
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -141,6 +172,64 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
         <div>
           <h2 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Painel do Administrador</h2>
           <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gerencie níveis de acesso e autorizações de pontos de coleta.</p>
+        </div>
+      </div>
+
+      {/* ── Token dos Correios ── */}
+      <div className={`p-6 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center gap-5 ${isDark ? 'bg-[#121620] border-slate-800/80' : 'bg-white border-slate-200'}`}>
+        <div className={`p-3 rounded-xl ${isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+          <KeyRound size={24} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Token de Acesso — API Correios</h3>
+          {tokenLoading && <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Carregando status...</p>}
+          {!tokenLoading && tokenStatus && (
+            <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2">
+              <div className="flex items-center gap-1.5">
+                {tokenStatus.status === 'ativo'
+                  ? <CheckCircle2 size={14} className="text-green-500" />
+                  : tokenStatus.status === 'expirando'
+                  ? <AlertTriangle size={14} className="text-amber-400" />
+                  : <AlertTriangle size={14} className="text-red-400" />}
+                <span className={`text-xs font-semibold ${tokenStatus.status === 'ativo' ? 'text-green-500' : tokenStatus.status === 'expirando' ? 'text-amber-400' : 'text-red-400'}`}>
+                  {tokenStatus.status === 'ativo' ? 'Ativo' : tokenStatus.status === 'expirando' ? 'Expirando em breve' : tokenStatus.status === 'expirado' ? 'Expirado' : 'Não gerado'}
+                </span>
+              </div>
+              {tokenStatus.generatedAt && (
+                <div className="flex items-center gap-1.5">
+                  <Clock size={13} className={isDark ? 'text-slate-400' : 'text-slate-500'} />
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Gerado em: {new Date(tokenStatus.generatedAt).toLocaleString('pt-BR')}
+                  </span>
+                </div>
+              )}
+              {tokenStatus.expiresAt && (
+                <div className="flex items-center gap-1.5">
+                  <Clock size={13} className={isDark ? 'text-slate-400' : 'text-slate-500'} />
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    Expira em: {new Date(tokenStatus.expiresAt).toLocaleString('pt-BR')}
+                    {tokenStatus.expiresInMinutes > 0 && ` (${tokenStatus.expiresInMinutes} min restantes)`}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          {!tokenLoading && !tokenStatus && (
+            <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Nenhum token encontrado. Clique em renovar para gerar um novo.</p>
+          )}
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <button onClick={fetchTokenStatus} className={`p-2 rounded-lg transition-colors ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}>
+            <RefreshCw size={15} className={tokenLoading ? 'animate-spin' : ''} />
+          </button>
+          <button
+            onClick={handleForceTokenRefresh}
+            disabled={tokenRefreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold rounded-lg transition-colors"
+          >
+            <RefreshCw size={14} className={tokenRefreshing ? 'animate-spin' : ''} />
+            {tokenRefreshing ? 'Renovando...' : 'Forçar Renovação'}
+          </button>
         </div>
       </div>
 

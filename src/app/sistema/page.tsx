@@ -72,7 +72,7 @@ export default function SistemaDashboard() {
     }
 
     // Busca dados complementares (isPontoColeta, status)
-    fetch('http://localhost:3000/auth/me', {
+    fetch('http://localhost:4000/auth/me', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => res.json())

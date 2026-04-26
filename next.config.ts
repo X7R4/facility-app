@@ -1,12 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    allowedDevOrigins: ['localhost', '127.0.0.1', '192.168.1.10'],
+  },
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        // Altere a porta 3000 abaixo se o seu backend rodar em outra porta!
-        destination: 'http://localhost:3000/:path*',
+        destination: 'http://localhost:4000/:path*',
       },
     ];
   },

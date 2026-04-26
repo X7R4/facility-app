@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { CheckCircle2, Search, AlertCircle, Loader2, Receipt } from "lucide-react";
 import InputField from "./InputField";
 import ViewReciboModal from "./ViewReciboModal";
+import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
+
+// Inicializa o Mercado Pago
+initMercadoPago('TEST-b7b09a71-92be-4520-9c55-a74c323b1817');
 
 export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   const [senderMode, setSenderMode] = useState<"fixed" | "existing" | "new">("fixed");
@@ -17,9 +21,19 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   const [pontoColetaNome, setPontoColetaNome] = useState("");
   const [showRecibo, setShowRecibo] = useState(false);
 
+  // PIX States
+  const [pixInfo, setPixInfo] = useState<any>(null);
+  const [pixEtiquetaId, setPixEtiquetaId] = useState<string | null>(null);
+  const [pixValor, setPixValor] = useState<number>(0);
+  const [pixStep, setPixStep] = useState<'form'|'qrcode'|'confirmed'>('form');
+  const [pixQrBase64, setPixQrBase64] = useState<string>('');
+  const [pixQrText, setPixQrText] = useState<string>('');
+  const [pixCopied, setPixCopied] = useState(false);
+  const [pixPaymentId, setPixPaymentId] = useState<string | null>(null);
+
   useEffect(() => {
     const token = localStorage.getItem('facility_token');
-    fetch('http://localhost:3000/auth/me', {
+    fetch('http://localhost:4000/auth/me', {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(r => r.json())
@@ -73,7 +87,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
         ]
       };
 
-      const res = await fetch(`http://localhost:3000/consulta/simularFrete`, {
+      const res = await fetch(`http://localhost:4000/consulta/simularFrete`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -101,7 +115,8 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   const [clientSearchResults, setClientSearchResults] = useState<any[]>([]);
   const [selectedClient, setSelectedClient] = useState<any>(null);
 
-  const API_BASE = "http://localhost:3000";
+  const API_BASE = "http://localhost:4000";
+  const API_PRE  = `${API_BASE}/prepostagem`;
 
   // Form State
   const [formData, setFormData] = useState({
@@ -137,7 +152,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   // Load Fixed Ponto (from User Profile)
   useEffect(() => {
     const token = localStorage.getItem('facility_token');
-    fetch('http://localhost:3000/auth/me', {
+    fetch('http://localhost:4000/auth/me', {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(r => r.json())
@@ -244,7 +259,6 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
     setPdfUrl(null);
     setQrCodeUrl(null);
 
-    const API_PRE = `${API_BASE}/prepostagem`;
 
     try {
       // Validação Básica
@@ -330,8 +344,51 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
       const cData = await cRes.json();
       if (!cRes.ok || !cData.id) throw new Error(cData.mensagem || cData.detalhe || "Falha ao criar pré-postagem na API dos Correios.");
 
-      const { id, codigoObjeto } = cData;
+      const { id, codigoObjeto, _idEtiqueta, pagamentoStatus } = cData;
 
+      // Se pendente, travar o fluxo para o Checkout Brick
+      if (pagamentoStatus === 'Pendente' && _idEtiqueta) {
+        setPixEtiquetaId(_idEtiqueta);
+        
+        // Buscamos o valor da simulação para o Brick
+        const simMatch = simulation.find(s => (formData.codigoServico === "03220" ? s.coProduto === "03220" : s.coProduto === "03298"));
+        setPixValor(parseFloat(simMatch?.custoParaUsuario || "0"));
+        setPixInfo(true); // Ativa a exibição do painel de pagamento
+        
+        // Preencher dados do recibo para exibir o botão
+        setGeradoEtiquetaData({
+          codigoObjeto: codigoObjeto,
+          remetente: formData.remetente.nome,
+          remetenteTelefone: formData.remetente.celular || formData.remetente.telefone,
+          destinatario: formData.destinatario.nome,
+          destinatarioCep: formData.destinatario.endereco.cep,
+          destinatarioCidade: formData.destinatario.endereco.cidade,
+          destinatarioUf: formData.destinatario.endereco.uf,
+          tipo: formData.codigoServico === '03220' ? 'SEDEX' : 'PAC',
+          peso: formData.pesoInformado,
+          medidas: `${formData.comprimentoInformado}x${formData.larguraInformada}x${formData.alturaInformada} cm`,
+          valorFinal: parseFloat(simMatch?.pcFinal || "0"),
+          prazoEntrega: parseInt(simMatch?.prazoEntrega || "5"),
+          createdAt: new Date().toISOString()
+        });
+
+        return; // Para o fluxo aqui! O usuário precisa pagar via Brick.
+      }
+
+      // Se Isento ou já de alguma forma pago, continua o fluxo normal
+      await fetchEtiquetaPdf(id, codigoObjeto);
+
+    } catch (error: any) {
+      console.error(error);
+      setErrorText(error.message);
+    } finally {
+      if (!pixInfo) setIsLoading(false);
+    }
+  };
+
+  const fetchEtiquetaPdf = async (idPostagem: string, codigoObjeto: string) => {
+    try {
+      setIsLoading(true);
       console.log("Aguardando 5s para transição Assíncrona Correios (Pendente -> Faturado)...");
       await new Promise(resolve => setTimeout(resolve, 5000));
 
@@ -341,29 +398,26 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${localStorage.getItem('facility_token')}`
         },
-        body: JSON.stringify({ idsPrePostagem: [id], tipoRotulo: "P", formatoRotulo: "EN" })
+        body: JSON.stringify({ idsPrePostagem: [idPostagem], tipoRotulo: "P", formatoRotulo: "EN" })
       });
       const gData = await gRes.json();
       if (!gRes.ok || !gData.idRecibo) throw new Error(gData.mensagem || "Falha ao gerar o rótulo da etiqueta.");
       const idRecibo = gData.idRecibo;
 
-      // Espera 3 segundos devido à API Assíncrona dos Correios (PPN-288)
+      // Espera 3 segundos devido à API Assíncrona dos Correios
       await new Promise(resolve => setTimeout(resolve, 3000));
 
-      // 3. Download Etiqueta (PDF) 
+      // Download Etiqueta (PDF) 
       const dRotRes = await fetch(`${API_PRE}/download-rotulo/${idRecibo}?pago=true`, {
         headers: {
           "Authorization": `Bearer ${localStorage.getItem('facility_token')}`
         }
       });
-      if (!dRotRes.ok) throw new Error("Falha ao autorizar liberação da etiqueta. Valide o pagamento.");
+      if (!dRotRes.ok) throw new Error("Falha ao autorizar liberação da etiqueta.");
       const rotBlob = await dRotRes.blob();
       setPdfUrl(URL.createObjectURL(rotBlob));
 
-      // 4. Download DCe foi migrado para o próprio PDF no Backend! O PDF já chegará "batizado"
-      // com a Logo Customizada e o QR Code DACE da Facility Envios!
-
-      // 5. Preencher dados para o Recibo
+      // Preencher dados para o Recibo
       const simMatch = simulation.find(s => (formData.codigoServico === "03220" ? s.coProduto === "03220" : s.coProduto === "03298"));
       setGeradoEtiquetaData({
         codigoObjeto: codigoObjeto,
@@ -388,6 +442,66 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
       setIsLoading(false);
     }
   };
+
+  const onPaymentSubmit = async ({ formData: mpFormData }: any) => {
+    try {
+      const token = localStorage.getItem('facility_token');
+      const response = await fetch(`http://localhost:4000/pix/processar/${pixEtiquetaId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(mpFormData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrorText(data.mensagem || "Erro ao processar pagamento.");
+        throw new Error(data.mensagem);
+      }
+
+      // Extrai QR Code da resposta
+      const txData = data?.point_of_interaction?.transaction_data;
+      if (txData?.qr_code_base64) {
+        setPixQrBase64(txData.qr_code_base64);
+        setPixQrText(txData.qr_code || '');
+        setPixPaymentId(String(data.id));
+        setPixStep('qrcode');
+      } else {
+        setErrorText('QR Code não disponível. Status: ' + data.status);
+      }
+
+      return data;
+    } catch (error: any) {
+      setErrorText(error.message || "Falha na comunicação.");
+      throw error;
+    }
+  };
+
+  // Poll status after QR shown
+  useEffect(() => {
+    if (pixStep !== 'qrcode' || !pixPaymentId || !pixEtiquetaId) return;
+    const interval = setInterval(async () => {
+      try {
+        const token = localStorage.getItem('facility_token');
+        const res = await fetch(`http://localhost:4000/pix/status/${pixEtiquetaId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const statusData = await res.json();
+          if (statusData.pagamentoStatus === 'Pago') {
+            clearInterval(interval);
+            setPixStep('confirmed');
+            await fetchEtiquetaPdf(pixEtiquetaId ?? '', geradoEtiquetaData?.codigoObjeto || '');
+          }
+        }
+      } catch (e) { /* silent */ }
+    }, 5000);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pixStep, pixPaymentId, pixEtiquetaId]);
 
   return (
     <div className="max-w-6xl space-y-6 pb-8">
@@ -695,8 +809,63 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
         </div>
 
         {/* Painel Lateral com os Resultados (Etiqueta & QRCode) */}
-        {(pdfUrl || qrCodeUrl) && (
+        {(pdfUrl || qrCodeUrl || pixInfo || geradoEtiquetaData) && (
           <div className="w-[380px] flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-500 sticky top-4">
+
+            {/* Box PIX Mercado Pago */}
+            {pixInfo && !pdfUrl && (
+              <div className={`p-6 rounded-2xl border shadow-sm ${isDark ? "bg-[#121620] border-amber-500/30" : "bg-white border-amber-200"}`}>
+                <h3 className={`font-bold mb-2 text-center ${isDark ? "text-amber-400" : "text-amber-600"}`}>Pagamento de Tarifa</h3>
+
+                {/* Step: Form (Brick) */}
+                {pixStep === 'form' && (
+                  <>
+                    <p className={`text-xs mb-4 text-center ${isDark ? "text-slate-400" : "text-slate-500"}`}>A etiqueta oficial será liberada após a confirmação do PIX.</p>
+                    <Payment
+                      initialization={{ amount: pixValor }}
+                      customization={{
+                        paymentMethods: { bankTransfer: ["pix"] },
+                        visual: { style: { theme: isDark ? 'dark' : 'default' } }
+                      } as any}
+                      onSubmit={onPaymentSubmit}
+                      onReady={() => {}}
+                      onError={(e: any) => setErrorText(e?.message || 'Erro no Brick')}
+                    />
+                  </>
+                )}
+
+                {/* Step: QR Code */}
+                {pixStep === 'qrcode' && (
+                  <div className="flex flex-col items-center gap-4">
+                    <p className={`text-xs text-center ${isDark ? "text-slate-400" : "text-slate-500"}`}>Escaneie o QR Code com seu banco</p>
+                    {pixQrBase64 && (
+                      <div className="p-2 bg-white rounded-xl">
+                        <img src={`data:image/png;base64,${pixQrBase64}`} alt="QR Code PIX" className="w-44 h-44" />
+                      </div>
+                    )}
+                    <div className={`w-full p-3 rounded-xl border text-xs break-all flex items-center gap-2 ${isDark ? 'bg-[#0f111a] border-slate-700 text-slate-300' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                      <span className="flex-1 line-clamp-3">{pixQrText}</span>
+                      <button onClick={() => { navigator.clipboard.writeText(pixQrText); setPixCopied(true); setTimeout(() => setPixCopied(false), 3000); }} className="shrink-0">
+                        {pixCopied ? <CheckCircle2 size={16} className="text-green-500" /> : <Search size={14} />}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Loader2 size={13} className="animate-spin text-amber-500" />
+                      <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Verificando pagamento…</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step: Confirmed */}
+                {pixStep === 'confirmed' && (
+                  <div className="flex flex-col items-center gap-3 py-4 text-center">
+                    <CheckCircle2 size={44} className="text-green-500" />
+                    <p className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Pagamento confirmado!</p>
+                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Gerando etiqueta…</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Box Etiqueta */}
             {pdfUrl && (

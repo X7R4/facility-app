@@ -1,182 +1,302 @@
-import { useState, useEffect } from "react";
-import { ListChecks, LayoutDashboard, CheckSquare, Square, Info, Receipt } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ListChecks, LayoutDashboard, CheckSquare, Square, Receipt, FileText, QrCode, Printer, RefreshCw } from "lucide-react";
 import ViewReciboModal from "./ViewReciboModal";
+import ViewPixModal from "./ViewPixModal";
+
+const API_BASE = "http://localhost:4000";
+const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [etiquetas, setEtiquetas] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds]     = useState<string[]>([]);
+  const [viewMode, setViewMode]           = useState<'list' | 'grid'>('list');
+  const [etiquetas, setEtiquetas]         = useState<any[]>([]);
+  const [loading, setLoading]             = useState(true);
   const [selectedRecibo, setSelectedRecibo] = useState<any>(null);
+  const [pixModalData, setPixModalData]   = useState<any>(null);
   const [pontoColetaNome, setPontoColetaNome] = useState("");
 
-  useEffect(() => {
-    const fetchEtiquetas = async () => {
-      const token = localStorage.getItem('facility_token');
-      if (token) {
-        try {
-          const profileRes = await fetch("http://localhost:3000/auth/me", {
-            headers: { "Authorization": `Bearer ${token}` }
-          });
-          if (profileRes.ok) {
-            const profileData = await profileRes.json();
-            setPontoColetaNome(profileData.nomePonto || profileData.nome || "Ponto de Coleta");
-          }
-        } catch (e) {}
+  const token = () => localStorage.getItem('facility_token') ?? '';
+
+  const fetchEtiquetasList = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [profileRes, listRes] = await Promise.all([
+        fetch(`${API_BASE}/auth/me`,   { headers: { Authorization: `Bearer ${token()}` } }),
+        fetch(`${API_BASE}/etiquetas`, { headers: { Authorization: `Bearer ${token()}` } }),
+      ]);
+      if (profileRes.ok) {
+        const p = await profileRes.json();
+        setPontoColetaNome(p.nomePonto || p.nome || "Ponto de Coleta");
       }
-      try {
-        const res = await fetch("http://localhost:3000/etiquetas", {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setEtiquetas(data);
-        }
-      } catch (err) {
-        console.error("Erro ao buscar etiquetas:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEtiquetas();
+      if (listRes.ok) setEtiquetas(await listRes.json());
+    } catch (err) {
+      console.error("Erro ao buscar etiquetas:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleSelectAll = () => {
-    if (selectedIds.length === etiquetas.length && etiquetas.length > 0) setSelectedIds([]);
-    else setSelectedIds(etiquetas.map(e => e.id));
+  useEffect(() => { fetchEtiquetasList(); }, [fetchEtiquetasList]);
+
+  /* ── Ações ─────────────────────────────────────────────── */
+
+  const handlePrintEtiqueta = (e: any) => {
+    // Só permite se status Aprovado e pago
+    if (e.status !== 'Aprovado' || e.pagamentoStatus === 'Pendente') return;
+    const id = e._id || e.id;
+    window.open(`${API_BASE}/prepostagem/pdf-salvo/${id}?token=${token()}`, '_blank');
   };
 
-  const toggleSelect = (id: string) => {
-    if (selectedIds.includes(id)) setSelectedIds(selectedIds.filter(i => i !== id));
-    else setSelectedIds([...selectedIds, id]);
+  const handlePayEtiqueta = (e: any) => {
+    setPixModalData({ idEtiqueta: e._id || e.id, valor: e.valorBaseUsuario });
+  };
+
+  const handlePixPaid = () => {
+    setPixModalData(null);
+    fetchEtiquetasList();
+  };
+
+  /* ── Seleção ─────────────────────────────────────────── */
+  const toggleSelect = (id: string) =>
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+
+  const handleSelectAll = () =>
+    setSelectedIds(selectedIds.length === etiquetas.length && etiquetas.length > 0 ? [] : etiquetas.map(e => e._id || e.id));
+
+  const selectedEtiquetas = etiquetas.filter(e => selectedIds.includes(e._id || e.id));
+  const pendingEtiquetas  = selectedEtiquetas.filter(e => e.pagamentoStatus === 'Pendente');
+  const totalPending      = pendingEtiquetas.reduce((s, e) => s + (e.valorBaseUsuario || 0), 0);
+
+  const handleMultiPay = () => {
+    if (pendingEtiquetas.length === 0) {
+      alert("Nenhuma etiqueta selecionada está pendente."); return;
+    }
+    setPixModalData({ idsEtiquetas: pendingEtiquetas.map(e => e._id || e.id), valor: totalPending });
+  };
+
+  /* ── Badge de status ─────────────────────────────────── */
+  const StatusBadge = ({ status, pagamentoStatus }: { status: string; pagamentoStatus: string }) => {
+    const isAprovado  = status === 'Aprovado';
+    const isFalhou    = status === 'Falhou';
+    const isPendente  = pagamentoStatus === 'Pendente';
+    const label       = isAprovado ? 'Aprovado' : isFalhou ? 'Falhou' : isPendente ? 'Pendente' : status;
+    const cls         = isAprovado
+      ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30'
+      : isFalhou
+        ? 'bg-red-500/15 text-red-400 ring-1 ring-red-500/30'
+        : 'bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/30';
+    return <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${cls}`}>{label}</span>;
   };
 
   return (
-    <div className="space-y-6 pb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5 pb-8">
+
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Minhas Etiquetas</h2>
-          <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Acompanhe o status e lucro de todos os seus envios.</p>
+          <h2 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            Minhas Etiquetas
+          </h2>
+          <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+            Acompanhe o status e lucro de todos os seus envios.
+          </p>
         </div>
         <div className="flex items-center gap-2">
-           <button 
-             onClick={() => setViewMode('list')}
-             className={`p-2 rounded-lg border transition-all ${viewMode === 'list' ? (isDark ? 'bg-blue-600/20 text-blue-500 border-blue-500/40' : 'bg-blue-50 text-blue-600 border-blue-200') : (isDark ? 'bg-slate-800 border-transparent text-slate-500' : 'bg-white border-slate-200 text-slate-400')}`}
-           >
-             <ListChecks size={20} />
-           </button>
-           <button 
-             onClick={() => setViewMode('grid')}
-             className={`p-2 rounded-lg border transition-all ${viewMode === 'grid' ? (isDark ? 'bg-blue-600/20 text-blue-500 border-blue-500/40' : 'bg-blue-50 text-blue-600 border-blue-200') : (isDark ? 'bg-slate-800 border-transparent text-slate-500' : 'bg-white border-slate-200 text-slate-400')}`}
-           >
-             <LayoutDashboard size={20} />
-           </button>
+          <button
+            onClick={fetchEtiquetasList}
+            className={`p-2 rounded-lg border transition-all ${isDark ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-900'}`}
+            title="Atualizar lista"
+          >
+            <RefreshCw size={18} />
+          </button>
+          <button onClick={() => setViewMode('list')} className={`p-2 rounded-lg border transition-all ${viewMode === 'list' ? (isDark ? 'bg-blue-600/20 text-blue-500 border-blue-500/40' : 'bg-blue-50 text-blue-600 border-blue-200') : (isDark ? 'bg-slate-800 border-transparent text-slate-500' : 'bg-white border-slate-200 text-slate-400')}`}>
+            <ListChecks size={20} />
+          </button>
+          <button onClick={() => setViewMode('grid')} className={`p-2 rounded-lg border transition-all ${viewMode === 'grid' ? (isDark ? 'bg-blue-600/20 text-blue-500 border-blue-500/40' : 'bg-blue-50 text-blue-600 border-blue-200') : (isDark ? 'bg-slate-800 border-transparent text-slate-500' : 'bg-white border-slate-200 text-slate-400')}`}>
+            <LayoutDashboard size={20} />
+          </button>
         </div>
       </div>
 
+      {/* ── Barra de seleção múltipla ── */}
       {selectedIds.length > 0 && (
-        <div className={`p-4 rounded-xl border flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300 ${isDark ? 'bg-blue-900/20 border-blue-500/30' : 'bg-blue-50 border-blue-200'}`}>
-           <span className={`text-sm font-bold ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>{selectedIds.length} etiquetas selecionadas</span>
-           <button className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">Pagar agora</button>
+        <div className={`p-3 rounded-xl border flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300 ${isDark ? 'bg-blue-900/20 border-blue-500/30' : 'bg-blue-50 border-blue-200'}`}>
+          <div className="flex flex-col">
+            <span className={`text-sm font-bold ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>{selectedIds.length} selecionadas</span>
+            {totalPending > 0 && (
+              <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Pendente ({pendingEtiquetas.length}): {fmt(totalPending)}
+              </span>
+            )}
+          </div>
+          {totalPending > 0 && (
+            <button onClick={handleMultiPay} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
+              Pagar Selecionadas
+            </button>
+          )}
         </div>
       )}
 
+      {/* ── Tabela ── */}
       {loading ? (
-        <div className="flex justify-center p-8 text-slate-500">Carregando etiquetas...</div>
+        <div className="flex justify-center p-10 text-slate-500">Carregando etiquetas...</div>
       ) : (
         <div className={`rounded-2xl border overflow-hidden ${isDark ? 'bg-[#121620] border-slate-800/80' : 'bg-white border-slate-200'}`}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className={`border-b text-xs font-bold uppercase tracking-widest ${isDark ? 'bg-slate-900/50 border-slate-800 text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
-                  <th className="px-6 py-4 w-10">
-                    <button onClick={handleSelectAll} className="text-blue-500">
-                      {selectedIds.length > 0 && selectedIds.length === etiquetas.length ? <CheckSquare size={18} /> : <Square size={18} />}
-                    </button>
-                  </th>
-                  <th className="px-6 py-4">Remetente</th>
-                  <th className="px-6 py-4">Destinatário</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Tipo</th>
-                  <th className="px-6 py-4 text-right">Custo Plataforma</th>
-                  <th className="px-6 py-4 text-right">Valor Cliente</th>
-                  <th className="px-6 py-4 text-right">Seu Lucro</th>
-                  <th className="px-6 py-4 text-right">Objeto</th>
-                  <th className="px-6 py-4"></th>
+          <table className="w-full text-left border-collapse table-fixed">
+            <colgroup>
+              <col style={{ width: '40px' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '7%' }} />
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '11%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '9%' }} />
+            </colgroup>
+            <thead>
+              <tr className={`border-b text-[10px] font-bold uppercase tracking-widest ${isDark ? 'bg-slate-900/60 border-slate-800 text-slate-500' : 'bg-slate-50 border-slate-200 text-slate-500'}`}>
+                <th className="px-3 py-3">
+                  <button onClick={handleSelectAll} className="text-blue-500">
+                    {selectedIds.length > 0 && selectedIds.length === etiquetas.length
+                      ? <CheckSquare size={16} /> : <Square size={16} />}
+                  </button>
+                </th>
+                <th className="px-3 py-3">Remetente</th>
+                <th className="px-3 py-3">Destinatário</th>
+                <th className="px-3 py-3">Status</th>
+                <th className="px-3 py-3">Tipo</th>
+                <th className="px-3 py-3 text-right">Custo</th>
+                <th className="px-3 py-3 text-right">Valor Cliente</th>
+                <th className="px-3 py-3 text-right">Lucro</th>
+                <th className="px-3 py-3 text-right">Objeto</th>
+                <th className="px-3 py-3 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className={`divide-y ${isDark ? 'divide-slate-800/60' : 'divide-slate-100'}`}>
+              {etiquetas.length === 0 && (
+                <tr>
+                  <td colSpan={10} className="px-6 py-10 text-center text-sm font-bold text-slate-500">
+                    Nenhuma etiqueta gerada ainda.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/0">
-                {etiquetas.length === 0 && (
-                  <tr>
-                     <td colSpan={7} className="px-6 py-8 text-center text-sm font-bold text-slate-500">Nenhuma etiqueta gerada ainda.</td>
+              )}
+              {etiquetas.map((e) => {
+                const id = e._id || e.id;
+                const isAprovado = e.status === 'Aprovado';
+                const isPago     = e.pagamentoStatus === 'Pago' || e.pagamentoStatus === 'Isento';
+                const canPrint   = isAprovado && isPago;
+
+                return (
+                  <tr key={id} className={`group transition-colors ${isDark ? 'hover:bg-slate-800/30' : 'hover:bg-slate-50'}`}>
+                    {/* Checkbox */}
+                    <td className="px-3 py-3">
+                      <button onClick={() => toggleSelect(id)} className={selectedIds.includes(id) ? 'text-blue-500' : (isDark ? 'text-slate-700' : 'text-slate-300')}>
+                        {selectedIds.includes(id) ? <CheckSquare size={16} /> : <Square size={16} />}
+                      </button>
+                    </td>
+
+                    {/* Remetente */}
+                    <td className="px-3 py-3">
+                      <p className={`text-xs font-bold truncate ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{e.remetente || e.remetenteNome}</p>
+                    </td>
+
+                    {/* Destinatário */}
+                    <td className="px-3 py-3">
+                      <p className={`text-xs font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{e.destinatario || e.destinatarioNome}</p>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-3 py-3">
+                      <StatusBadge status={e.status} pagamentoStatus={e.pagamentoStatus} />
+                    </td>
+
+                    {/* Tipo */}
+                    <td className="px-3 py-3">
+                      <span className={`text-[10px] font-bold ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{e.tipo || e.tipoEnvio}</span>
+                    </td>
+
+                    {/* Custo Plataforma */}
+                    <td className="px-3 py-3 text-right">
+                      <p className={`text-xs font-bold ${isDark ? 'text-rose-400' : 'text-rose-600'}`}>{fmt(e.valorBaseUsuario || 0)}</p>
+                    </td>
+
+                    {/* Valor Cliente */}
+                    <td className="px-3 py-3 text-right">
+                      <p className={`text-xs font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{fmt(e.valorFinal || 0)}</p>
+                    </td>
+
+                    {/* Lucro */}
+                    <td className="px-3 py-3 text-right">
+                      <p className={`text-xs font-black ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>{fmt(e.lucroUsuario || 0)}</p>
+                    </td>
+
+                    {/* Código Objeto */}
+                    <td className="px-3 py-3 text-right">
+                      <p className="text-[10px] font-bold text-blue-500 truncate">{e.codigoObjeto}</p>
+                    </td>
+
+                    {/* Ações */}
+                    <td className="px-3 py-3">
+                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                        {/* Imprimir — só Aprovado+Pago */}
+                        {canPrint ? (
+                          <button
+                            onClick={() => handlePrintEtiqueta(e)}
+                            className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-emerald-900/30 text-emerald-400' : 'hover:bg-emerald-50 text-emerald-600'}`}
+                            title="Imprimir Etiqueta (PDF)"
+                          >
+                            <Printer size={15} />
+                          </button>
+                        ) : !isPago ? (
+                          <button
+                            onClick={() => handlePayEtiqueta(e)}
+                            className="p-1.5 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-all"
+                            title="Realizar Pagamento PIX"
+                          >
+                            <QrCode size={15} />
+                          </button>
+                        ) : (
+                          <span className={`p-1.5 rounded-lg ${isDark ? 'text-slate-600' : 'text-slate-300'}`} title="Aguardando aprovação">
+                            <FileText size={15} />
+                          </span>
+                        )}
+
+                        {/* Ver Recibo */}
+                        <button
+                          onClick={() => setSelectedRecibo(e)}
+                          className={`p-1.5 rounded-lg transition-all ${isDark ? 'hover:bg-blue-900/30 text-blue-400' : 'hover:bg-blue-50 text-blue-600'}`}
+                          title="Ver Recibo"
+                        >
+                          <Receipt size={15} />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                )}
-                {etiquetas.map((e) => (
-                  <tr key={e.id} className={`group transition-colors ${isDark ? 'hover:bg-slate-800/30' : 'hover:bg-slate-50'}`}>
-                    <td className="px-6 py-4">
-                      <button onClick={() => toggleSelect(e.id)} className={selectedIds.includes(e.id) ? 'text-blue-500' : (isDark ? 'text-slate-700' : 'text-slate-300')}>
-                        {selectedIds.includes(e.id) ? <CheckSquare size={18} /> : <Square size={18} />}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className={`text-sm font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{e.remetente}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{e.destinatario}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${e.status === 'Aprovado' ? 'bg-emerald-500/10 text-emerald-500' : e.status === 'Falhou' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                        {e.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`text-xs font-bold ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{e.tipo}</span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <p className={`text-sm font-bold ${isDark ? 'text-rose-400' : 'text-rose-600'}`}>
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(e.valorBaseUsuario || 0)}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <p className={`text-sm font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(e.valorFinal || 0)}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <p className={`text-sm font-black ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(e.lucroUsuario || 0)}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <p className="text-sm font-bold text-blue-500">{e.codigoObjeto}</p>
-                    </td>
-                    <td className="px-6 py-4 text-right flex justify-end gap-2">
-                      <button 
-                        onClick={() => setSelectedRecibo(e)}
-                        className={`p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100 ${isDark ? 'hover:bg-blue-900/30 text-blue-400 hover:text-blue-300' : 'hover:bg-blue-100 text-blue-600 hover:text-blue-800'}`}
-                        title="Ver Recibo"
-                      >
-                        <Receipt size={18} />
-                      </button>
-                      <button className={`p-2 rounded-lg transition-all opacity-0 group-hover:opacity-100 ${isDark ? 'hover:bg-slate-800 text-slate-500 hover:text-white' : 'hover:bg-slate-200 text-slate-400 hover:text-slate-900'}`}>
-                        <Info size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
+      {/* ── Modais ── */}
       {selectedRecibo && (
-        <ViewReciboModal 
-          etiqueta={selectedRecibo} 
-          pontoColetaNome={pontoColetaNome} 
-          onClose={() => setSelectedRecibo(null)} 
+        <ViewReciboModal
+          etiqueta={selectedRecibo}
+          pontoColetaNome={pontoColetaNome}
+          onClose={() => setSelectedRecibo(null)}
+        />
+      )}
+
+      {pixModalData && (
+        <ViewPixModal
+          pixInfo={pixModalData}
+          onClose={() => setPixModalData(null)}
+          onPaid={handlePixPaid}
+          isDark={isDark}
         />
       )}
     </div>

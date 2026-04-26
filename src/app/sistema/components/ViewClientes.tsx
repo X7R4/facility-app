@@ -13,7 +13,7 @@ export default function ViewClientes({ isDark }: { isDark: boolean }) {
     const fetchClientes = async () => {
       const token = localStorage.getItem('facility_token');
       try {
-        const res = await fetch("http://localhost:3000/clientes", {
+        const res = await fetch("http://localhost:4000/clientes", {
           headers: {
             "Authorization": `Bearer ${token}`
           }
