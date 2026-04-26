@@ -5,7 +5,7 @@ import ViewReciboModal from "./ViewReciboModal";
 import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
 
 // Inicializa o Mercado Pago
-initMercadoPago('TEST-b7b09a71-92be-4520-9c55-a74c323b1817');
+initMercadoPago('APP_USR-a3a1a4ca-73cb-49e7-9ef2-d62878cc488a');
 
 export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   const [senderMode, setSenderMode] = useState<"fixed" | "existing" | "new">("fixed");
@@ -125,7 +125,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
       cpfCnpj: "",
       telefone: "",
       email: "",
-      endereco: { cep: "", logradouro: "", numero: "", bairro: "", cidade: "", uf: "", país: "BR" }
+      endereco: { cep: "", logradouro: "", numero: "", bairro: "", cidade: "", uf: "", pais: "BR" }
     },
     destinatario: {
       nome: "Maria Oliveira",
@@ -192,7 +192,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
       setFormData(prev => ({
         ...prev, remetente: {
           nome: "", cpfCnpj: "", telefone: "", email: "",
-          endereco: { cep: "", logradouro: "", numero: "", bairro: "", cidade: "", uf: "", país: "BR" }
+          endereco: { cep: "", logradouro: "", numero: "", bairro: "", cidade: "", uf: "", pais: "BR" }
         }
       }));
     }
@@ -297,7 +297,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
             bairro: formData.remetente.endereco.bairro,
             cidade: formData.remetente.endereco.cidade,
             uf: formData.remetente.endereco.uf,
-            país: "BR"
+            pais: "BR"
           }
         },
         destinatario: {
@@ -310,7 +310,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
             bairro: formData.destinatario.endereco.bairro,
             cidade: formData.destinatario.endereco.cidade,
             uf: formData.destinatario.endereco.uf,
-            país: "BR"
+            pais: "BR"
           }
         },
         codigoServico: formData.codigoServico,
@@ -359,7 +359,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
         setGeradoEtiquetaData({
           codigoObjeto: codigoObjeto,
           remetente: formData.remetente.nome,
-          remetenteTelefone: formData.remetente.celular || formData.remetente.telefone,
+          remetenteTelefone: formData.remetente.telefone,
           destinatario: formData.destinatario.nome,
           destinatarioCep: formData.destinatario.endereco.cep,
           destinatarioCidade: formData.destinatario.endereco.cidade,
@@ -422,7 +422,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
       setGeradoEtiquetaData({
         codigoObjeto: codigoObjeto,
         remetente: formData.remetente.nome,
-        remetenteTelefone: formData.remetente.celular || formData.remetente.telefone,
+        remetenteTelefone: formData.remetente.telefone,
         destinatario: formData.destinatario.nome,
         destinatarioCep: formData.destinatario.endereco.cep,
         destinatarioCidade: formData.destinatario.endereco.cidade,

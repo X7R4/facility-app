@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { X, QrCode, Copy, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { initMercadoPago, Payment, StatusScreen } from "@mercadopago/sdk-react";
 
-initMercadoPago('TEST-b7b09a71-92be-4520-9c55-a74c323b1817');
+initMercadoPago('APP_USR-a3a1a4ca-73cb-49e7-9ef2-d62878cc488a');
 
 type Step = 'form' | 'qrcode' | 'confirmed' | 'error';
 
