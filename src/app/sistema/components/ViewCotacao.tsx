@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import gsap from "gsap";
 import { Package, Truck, Loader2 } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 import InputField from "./InputField";
 
 function QuoteCard({ service, days, price, margin, isDark, highlight }: any) {
@@ -46,7 +47,7 @@ export default function ViewCotacao({ isDark }: { isDark: boolean }) {
   const [cepOrigem, setCepOrigem] = useState("13206305");
   const [cepDestino, setCepDestino] = useState("");
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  const API_BASE = API_BASE_URL;
 
   const performQuote = async () => {
     if (!cepDestino || cepDestino.replace(/\D/g, "").length < 8) {

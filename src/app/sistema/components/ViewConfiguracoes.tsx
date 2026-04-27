@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Sun, DollarSign, Minus, Plus, CheckCircle2, Loader2, Save, Trash2, Info } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 
 export default function ViewConfiguracoes({ isDark, isDarkGlobal, setIsDarkGlobal }: any) {
   const [rules, setRules] = useState<any[]>([]);
@@ -13,7 +14,7 @@ export default function ViewConfiguracoes({ isDark, isDarkGlobal, setIsDarkGloba
 
   const fetchUserData = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/me`, {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('facility_token')}` }
       });
       const data = await res.json();
@@ -44,7 +45,7 @@ export default function ViewConfiguracoes({ isDark, isDarkGlobal, setIsDarkGloba
   const saveRules = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/regras-ponto`, {
+      const res = await fetch(`${API_BASE_URL}/auth/regras-ponto`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

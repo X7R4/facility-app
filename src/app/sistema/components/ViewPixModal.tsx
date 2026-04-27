@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { X, QrCode, Copy, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 import { initMercadoPago, Payment, StatusScreen } from "@mercadopago/sdk-react";
 
 initMercadoPago('APP_USR-a3a1a4ca-73cb-49e7-9ef2-d62878cc488a');
@@ -35,7 +36,7 @@ export default function ViewPixModal({
         const token = localStorage.getItem('facility_token');
         // We check any of the etiqueta IDs
         const checkId = pixInfo.idsEtiquetas ? pixInfo.idsEtiquetas[0] : pixInfo.idEtiqueta;
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/pix/status/${checkId}`, {
+        const res = await fetch(`${API_BASE_URL}/pix/status/${checkId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -63,7 +64,7 @@ export default function ViewPixModal({
       const targetId = pixInfo.idsEtiquetas ? 'multiple' : pixInfo.idEtiqueta;
       const token = localStorage.getItem('facility_token');
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/pix/processar/${targetId}`, {
+      const response = await fetch(`${API_BASE_URL}/pix/processar/${targetId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

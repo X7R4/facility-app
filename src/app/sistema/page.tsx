@@ -12,11 +12,10 @@ import {
   Bell,
   Sun,
   Moon,
-  Users,
-  ListChecks,
   LogOut,
   ShieldAlert
 } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -72,7 +71,7 @@ export default function SistemaDashboard() {
     }
 
     // Busca dados complementares (isPontoColeta, status)
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/me`, {
+    fetch(`${API_BASE_URL}/auth/me`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
     .then(res => res.json())

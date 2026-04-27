@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Search, UserPlus, Edit2, ChevronRight, ArrowLeft } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 import InputField from "./InputField";
 
 export default function ViewClientes({ isDark }: { isDark: boolean }) {
@@ -13,7 +14,7 @@ export default function ViewClientes({ isDark }: { isDark: boolean }) {
     const fetchClientes = async () => {
       const token = localStorage.getItem('facility_token');
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/clientes`, {
+        const res = await fetch(`${API_BASE_URL}/clientes`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }

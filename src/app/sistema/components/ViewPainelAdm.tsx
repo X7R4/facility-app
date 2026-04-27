@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ShieldCheck, UserCheck, ShieldAlert, ArrowRight, Settings2, X, Plus, Trash2, KeyRound, RefreshCw, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 
 export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
   const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -25,7 +26,7 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
     setTokenLoading(true);
     try {
       const token = localStorage.getItem('facility_token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/admin/correios/token-status`, {
+      const res = await fetch(`${API_BASE_URL}/admin/correios/token-status`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setTokenStatus(await res.json());
@@ -36,7 +37,7 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
     setTokenRefreshing(true);
     try {
       const token = localStorage.getItem('facility_token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/admin/correios/token-refresh`, {
+      const res = await fetch(`${API_BASE_URL}/admin/correios/token-refresh`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -50,7 +51,7 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
     setLoading(true);
     const token = localStorage.getItem('facility_token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/admin/usuarios`, {
+      const res = await fetch(`${API_BASE_URL}/admin/usuarios`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -71,7 +72,7 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
   const updateUser = async (id: string, payload: any) => {
      const token = localStorage.getItem('facility_token');
      try {
-       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/admin/usuarios/${id}`, {
+       const res = await fetch(`${API_BASE_URL}/admin/usuarios/${id}`, {
          method: 'PUT',
          headers: {
            "Authorization": `Bearer ${token}`,
@@ -117,7 +118,7 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
     setNewPassword('');
     const token = localStorage.getItem('facility_token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/admin/usuarios/${user._id}/detalhes`, {
+      const res = await fetch(`${API_BASE_URL}/admin/usuarios/${user._id}/detalhes`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -134,7 +135,7 @@ export default function ViewPainelAdm({ isDark }: { isDark: boolean }) {
     if (!confirm("Tem certeza que deseja resetar a senha deste usuário? A nova senha será exibida na tela.")) return;
     const token = localStorage.getItem('facility_token');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/admin/usuarios/${viewingDetails._id}/reset-senha`, {
+      const res = await fetch(`${API_BASE_URL}/admin/usuarios/${viewingDetails._id}/reset-senha`, {
         method: 'POST',
         headers: { "Authorization": `Bearer ${token}` }
       });

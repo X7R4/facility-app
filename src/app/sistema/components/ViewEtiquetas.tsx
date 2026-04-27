@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { ListChecks, LayoutDashboard, CheckSquare, Square, Receipt, FileText, QrCode, Printer, RefreshCw, Download } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 import ViewReciboModal from "./ViewReciboModal";
 import ViewPixModal from "./ViewPixModal";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_BASE = API_BASE_URL;
 const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
 export default function ViewEtiquetas({ isDark }: { isDark: boolean }) {

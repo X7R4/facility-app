@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { CheckCircle2, Search, AlertCircle, Loader2, Receipt, Printer, Download } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 import InputField from "./InputField";
 import ViewReciboModal from "./ViewReciboModal";
 import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
@@ -33,7 +34,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
 
   useEffect(() => {
     const token = localStorage.getItem('facility_token');
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/me`, {
+    fetch(`${API_BASE_URL}/auth/me`, {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(r => r.json())
@@ -87,7 +88,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
         ]
       };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/consulta/simularFrete`, {
+      const res = await fetch(`${API_BASE_URL}/consulta/simularFrete`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,7 +116,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   const [clientSearchResults, setClientSearchResults] = useState<any[]>([]);
   const [selectedClient, setSelectedClient] = useState<any>(null);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  const API_BASE = API_BASE_URL;
   const API_PRE  = `${API_BASE}/prepostagem`;
 
   // Form State
@@ -152,7 +153,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   // Load Fixed Ponto (from User Profile)
   useEffect(() => {
     const token = localStorage.getItem('facility_token');
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/me`, {
+    fetch(`${API_BASE_URL}/auth/me`, {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(r => r.json())
@@ -446,7 +447,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
   const onPaymentSubmit = async ({ formData: mpFormData }: any) => {
     try {
       const token = localStorage.getItem('facility_token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/pix/processar/${pixEtiquetaId}`, {
+      const response = await fetch(`${API_BASE_URL}/pix/processar/${pixEtiquetaId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -486,7 +487,7 @@ export default function ViewPrePostagem({ isDark }: { isDark: boolean }) {
     const interval = setInterval(async () => {
       try {
         const token = localStorage.getItem('facility_token');
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/pix/status/${pixEtiquetaId}`, {
+        const res = await fetch(`${API_BASE_URL}/pix/status/${pixEtiquetaId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {

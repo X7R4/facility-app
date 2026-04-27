@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Camera, X, Save, MapPin, Loader2, User } from 'lucide-react';
+import { API_BASE_URL } from "@/config/api";
 
 interface ViewConfigModalProps {
   onClose: () => void;
@@ -32,7 +33,7 @@ export default function ViewConfigModal({ onClose, isDark, onSaved }: ViewConfig
     const fetchPerfil = async () => {
       try {
         const token = localStorage.getItem('facility_token');
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/me`, {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {
@@ -113,7 +114,7 @@ export default function ViewConfigModal({ onClose, isDark, onSaved }: ViewConfig
     setLoading(true);
     try {
       const token = localStorage.getItem('facility_token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/perfil`, {
+      const res = await fetch(`${API_BASE_URL}/auth/perfil`, {
         method: 'PUT',
         headers: {
           "Content-Type": "application/json",

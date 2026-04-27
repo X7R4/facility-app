@@ -1,6 +1,7 @@
 import { useLayoutEffect, useState, useEffect } from "react";
 import gsap from "gsap";
 import { Package, DollarSign, TrendingUp } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 
 function MetricCard({ title, value, change, icon, color, isDark }: { title: string, value: string, change: string, icon: React.ReactNode, color: string, isDark: boolean }) {
   const colorMap: Record<string, string> = {
@@ -34,7 +35,7 @@ export default function ViewDashboard({ isDark }: { isDark: boolean }) {
     const fetchStats = async () => {
       const token = localStorage.getItem('facility_token');
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/dashboard`, {
+        const res = await fetch(`${API_BASE_URL}/dashboard`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {
