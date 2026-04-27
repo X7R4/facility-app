@@ -12,6 +12,8 @@ import {
   Bell,
   Sun,
   Moon,
+  Users,
+  ListChecks,
   LogOut,
   ShieldAlert
 } from "lucide-react";
